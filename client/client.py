@@ -4,6 +4,7 @@ import pyaudio
 # Socket
 HOST = socket.gethostname()
 PORT = 5000
+PACKET_SIZE = 1024 * 8
 
 # Audio
 CHUNK = 1024 * 4
@@ -20,10 +21,12 @@ stream = p.open(format=FORMAT,
 
 print("Recording")
 
-with socket.socket() as client_socket:
-    client_socket.connect((HOST, PORT))
+with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
+    client_socket.bind((HOST, 5001))
+    #client_socket.connect((HOST, PORT))
     while True:
         data = stream.read(CHUNK)
-        client_socket.send(data)
+        client_socket.sendto(data, (HOST, PORT))
+        data, address = client_socket.recvfrom(PACKET_SIZE)
         stream.write(data)
         

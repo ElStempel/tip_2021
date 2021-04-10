@@ -4,6 +4,7 @@ import pyaudio
 # Socket
 HOST = socket.gethostname()
 PORT = 5000
+PACKET_SIZE = 1024 * 8
 
 # Audio
 CHUNK = 1024 * 4
@@ -17,17 +18,16 @@ stream = p.open(format=FORMAT,
                 output=True,
                 frames_per_buffer=CHUNK)
 
-with socket.socket() as server_socket:
+with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
     server_socket.bind((HOST, PORT))
-    server_socket.listen(1)
-    conn, address = server_socket.accept()
-    print("Connection from " + address[0] + ":" + str(address[1]))
+    #server_socket.listen(1)
+    #conn, address = server_socket.accept()
+    #print("Connection from " + address[0] + ":" + str(address[1]))
 
-    data = conn.recv(CHUNK)
-    while data != "":
-        data = conn.recv(CHUNK)
+    while True:
+        data, address = server_socket.recvfrom(PACKET_SIZE)
         #stream.write(data)
-        conn.send(data)
+        server_socket.sendto(data, address)
 
 stream.stop_stream()
 stream.close()
