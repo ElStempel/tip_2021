@@ -1,7 +1,7 @@
 import socket
 import pyaudio
 from threading import Thread
-import users
+from users import User
 
 # Participants List
 userList = []
@@ -24,14 +24,22 @@ stream = p.open(format=FORMAT,
                 output=True,
                 frames_per_buffer=CHUNK)
 
+print("Server is running...")
 
-
-def newConnection(conn, address):
-    while True:
-        data = conn.recv(1024) #komunikaty: JOIN Nick; LEAV;
-        decoded = data.decode('UTF-8')
-        print(decoded)
+def newConnection(conn, address): #PORAWIĆ! KAŻDY USER POTRZEBUJE SWOJEGO PORTU TCP
+    data = conn.recv(1024) #komunikaty: JOIN Nick; LEAV;
+    decoded = data.decode('UTF-8')
+    message = decoded.split()
+    if(message[0] == 'JOIN' and len(message[1]) > 0 and len(message[2]) > 0):
+        print('Received: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
+        user = User(conn, message[1], address, int(message[2]))
+        userList.append(user)
         conn.send(bytes('OK', 'UTF-8'))
+    else:
+        print('Received bad data: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
+        conn.send(bytes('BAD DATA', 'UTF-8'))
+        conn.close()
+
 
 def userConnections():
     with socket.socket() as connection_socket:
@@ -49,7 +57,9 @@ def audioStreaming():
 
         while True:
             data, address = server_socket.recvfrom(PACKET_SIZE)
-            server_socket.sendto(data, address)
+            for user in userList:
+                if(user.udpAddr != address):
+                    server_socket.sendto(data, user.udpAddr)
 
 t1 = Thread(target=userConnections, args=())
 t2 = Thread(target=audioStreaming, args=())

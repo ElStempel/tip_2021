@@ -1,6 +1,7 @@
 class User:
-    def __init__(self, name, address, port):
+    def __init__(self, tcpConn, name, addr, udpPort):
+        self.tcpConn = tcpConn
         self.name = name
-        self.address = address
-        self.port = port
+        self.tcpAddr = addr
+        self.udpAddr = (addr[0],udpPort)
     

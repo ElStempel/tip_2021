@@ -1,11 +1,12 @@
 import socket
 import pyaudio
+import sys
 from threading import Thread
 
 # Socket
 HOST = socket.gethostname()
-MY_PORT_UDP = 6000
-MY_PORT_TCP = 6001
+MY_PORT_UDP = int(sys.argv[1])
+MY_PORT_TCP = int(sys.argv[2])
 PORT_UDP = 5000
 PORT_TCP = 5001
 PACKET_SIZE = 1024 * 8
@@ -23,20 +24,20 @@ stream = p.open(format=FORMAT,
                 output=True,
                 frames_per_buffer=CHUNK)
 
-print("Connecting")
+print("Connecting from "+HOST+", TCP:"+str(MY_PORT_TCP)+", UDP:"+str(MY_PORT_UDP))
 
 def tcpConnection():
-    nick = 'Kony'
+    nick = sys.argv[3]
 
     with socket.socket() as tcp_socket:
         tcp_socket.bind((HOST, MY_PORT_TCP))
         tcp_socket.connect((HOST, PORT_TCP))
-        while True:
-            data = 'JOIN ' + nick
-            tcp_socket.send(bytes(data, 'UTF-8'))
-            data = tcp_socket.recv(1024)
-            decoded = data.decode('UTF-8')
-            print(decoded)
+        #while True:
+        data = 'JOIN ' + nick + ' ' + str(MY_PORT_UDP)
+        tcp_socket.send(bytes(data, 'UTF-8'))
+        data = tcp_socket.recv(1024)
+        decoded = data.decode('UTF-8')
+        print(decoded)
 
 Thread(target=tcpConnection, args=()).start()
 
