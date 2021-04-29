@@ -35,6 +35,14 @@ def newConnection(conn, address): #PORAWIĆ! KAŻDY USER POTRZEBUJE SWOJEGO PORT
         user = User(conn, message[1], address, int(message[2]))
         userList.append(user)
         conn.send(bytes('OK', 'UTF-8'))
+        while True:
+            data = conn.recv(1024)
+            decoded = data.decode('UTF-8')
+            message = decoded.split()
+            if(message[0] == 'LEAV'):
+                userList.remove(user)
+                conn.send(bytes('BYE', 'UTF-8'))
+                conn.close()
     else:
         print('Received bad data: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
         conn.send(bytes('BAD DATA', 'UTF-8'))

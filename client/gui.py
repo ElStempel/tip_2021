@@ -4,12 +4,14 @@ from PyQt5.QtCore import *
 
 import sys
 
+import client
+
 joined = False
 
 class Login_Okno(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(Login_Okno,self).__init__(*args,*kwargs)
-        self.setWindowTitle("Okno Logowania")
+        self.setWindowTitle("Dołączanie")
         
         #tytuł
         titleText = QLabel()
@@ -69,7 +71,7 @@ class Login_Okno(QMainWindow):
 class Stream_Okno(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(Stream_Okno,self).__init__(*args,*kwargs)
-        self.setWindowTitle("Okno Streamowania")
+        self.setWindowTitle("Pokój rozmów")
         
         #tytuł (ip i port)
         titleText = QLabel()
