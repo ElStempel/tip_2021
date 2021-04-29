@@ -1,7 +1,7 @@
 import socket
-import pyaudio
 from threading import Thread
 from users import User
+from contextlib import closing
 
 # Participants List
 userList = []
@@ -11,18 +11,6 @@ HOST = socket.gethostname()
 PORT_UDP = 5000
 PORT_TCP = 5001
 PACKET_SIZE = 1024 * 8
-
-# Audio
-CHUNK = 1024 * 4
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100
-p = pyaudio.PyAudio()
-stream = p.open(format=FORMAT,
-                channels=CHANNELS,
-                rate=RATE,
-                output=True,
-                frames_per_buffer=CHUNK)
 
 print("Server is running...")
 
@@ -74,7 +62,3 @@ t1 = Thread(target=userConnections, args=())
 t2 = Thread(target=audioStreaming, args=())
 t1.start()
 t2.start()
-
-stream.stop_stream()
-stream.close()
-p.terminate()

@@ -5,6 +5,7 @@ from threading import Thread
 import time
 from contextlib import closing
 
+
 tcp_conn_status = False
 disconnect = False
 
@@ -30,15 +31,21 @@ PACKET_SIZE = 1024 * 8
 
 
 # Audio
-CHUNK = 1024 * 4
+CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
-RATE = 44100
+RATE = 20000
 p = pyaudio.PyAudio()
-stream = p.open(format=FORMAT,
+rec_stream = p.open(format=FORMAT,
                 channels=CHANNELS,
                 rate=RATE,
                 input=True,
+                output=False,
+                frames_per_buffer=CHUNK)
+play_stream = p.open(format=FORMAT,
+                channels=CHANNELS,
+                rate=RATE,
+                input=False,
                 output=True,
                 frames_per_buffer=CHUNK)
 
@@ -78,10 +85,10 @@ def udpConnection():
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
                 client_socket.bind((HOST, MY_PORT_UDP))
                 while (disconnect == False):
-                    data = stream.read(CHUNK)
+                    data = rec_stream.read(CHUNK)
                     client_socket.sendto(data, (HOST, PORT_UDP))
                     data, address = client_socket.recvfrom(PACKET_SIZE)
-                    stream.write(data)
+                    play_stream.write(data)
 
 tcpThread = Thread(target=tcpConnection, args=())
 udpThread = Thread(target=udpConnection, args=())
