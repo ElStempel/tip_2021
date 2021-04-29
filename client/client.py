@@ -3,17 +3,31 @@ import pyaudio
 import sys
 from threading import Thread
 import time
+from contextlib import closing
 
 tcp_conn_status = False
 disconnect = False
 
 # Socket
+def find_free_tcp_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
+def find_free_udp_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
 HOST = socket.gethostname()
-MY_PORT_UDP = 0#int(sys.argv[1])
-MY_PORT_TCP = 0#int(sys.argv[2])
+MY_PORT_UDP = find_free_udp_port()
+MY_PORT_TCP = find_free_tcp_port()
 PORT_UDP = 5000
 PORT_TCP = 5001
 PACKET_SIZE = 1024 * 8
+
 
 # Audio
 CHUNK = 1024 * 4
@@ -28,10 +42,11 @@ stream = p.open(format=FORMAT,
                 output=True,
                 frames_per_buffer=CHUNK)
 
-#print("Connecting from "+HOST+", TCP:"+str(MY_PORT_TCP)+", UDP:"+str(MY_PORT_UDP))
 
 def tcpConnection():
     nick = "STMPL"#sys.argv[3]
+    global tcp_conn_status
+    global disconnect
 
     with socket.socket() as tcp_socket:
         tcp_socket.bind((HOST, MY_PORT_TCP))
@@ -56,6 +71,8 @@ def tcpConnection():
 
 
 def udpConnection():
+    global tcp_conn_status
+    global disconnect
     while True:
         if (tcp_conn_status == True):
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
@@ -70,20 +87,24 @@ tcpThread = Thread(target=tcpConnection, args=())
 udpThread = Thread(target=udpConnection, args=())
 
 def Start():
+    global tcp_conn_status
+    global disconnect
     tcpThread.start()
     for i in range(10):
-        #komunikat "connecting"
+        print('connecting')#komunikat "connecting"
         if (tcp_conn_status == True):
             break
         time.sleep(1)
     if (tcp_conn_status == True):
         udpThread.start()
-        #zmiana na okno rozmowy
+        print('connected')#zmiana na okno rozmowy
     else:
-        #wyjeb błąd
+        print('error')#wyjeb błąd
         pass
 
 def stopConnection():
+    global tcp_conn_status
+    global disconnect
     disconnect = True
     while (disconnect == True):
         if (tcp_conn_status == False):

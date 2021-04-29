@@ -27,6 +27,7 @@ stream = p.open(format=FORMAT,
 print("Server is running...")
 
 def newConnection(conn, address): #PORAWIĆ! KAŻDY USER POTRZEBUJE SWOJEGO PORTU TCP
+    global userList
     data = conn.recv(1024) #komunikaty: JOIN Nick; LEAV;
     decoded = data.decode('UTF-8')
     message = decoded.split()
