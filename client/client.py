@@ -5,117 +5,94 @@ from threading import Thread
 import time
 from contextlib import closing
 
+class Client:
+    def __init__(self):
+        self.tcp_conn_status = False
+        self.server_udp_port = 5000
+        self.server_tcp_port = 5001
+        self.server_address = '127.0.0.1'
+        self.nick = 'Tester'
 
-tcp_conn_status = False
-disconnect = False
+        #audio settings
+        CHUNK = 1024
+        FORMAT = pyaudio.paInt16
+        CHANNELS = 1
+        RATE = 20000
 
-# Socket
-def find_free_tcp_port():
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(('', 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return s.getsockname()[1]
+        #init mic recording and sound playback
+        self.p = pyaudio.PyAudio()
+        self.rec_stream = self.p.open(format=FORMAT,
+                        channels=CHANNELS,
+                        rate=RATE,
+                        input=True,
+                        frames_per_buffer=CHUNK)
+        self.play_stream = self.p.open(format=FORMAT,
+                        channels=CHANNELS,
+                        rate=RATE,
+                        output=True,
+                        frames_per_buffer=CHUNK)
 
-def find_free_udp_port():
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as s:
-        s.bind(('', 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return s.getsockname()[1]
+        self.tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-HOST = socket.gethostname()
-MY_PORT_UDP = find_free_udp_port()
-MY_PORT_TCP = find_free_tcp_port()
-PORT_UDP = 5000
-PORT_TCP = 5001
-PACKET_SIZE = 1024 * 8
+    def set_free_udp_port(self):
+        self.udp_s.bind(('', 0))
 
+    def set_nick(self, nick):
+        self.nick = nick
 
-# Audio
-CHUNK = 1024
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 20000
-p = pyaudio.PyAudio()
-rec_stream = p.open(format=FORMAT,
-                channels=CHANNELS,
-                rate=RATE,
-                input=True,
-                output=False,
-                frames_per_buffer=CHUNK)
-play_stream = p.open(format=FORMAT,
-                channels=CHANNELS,
-                rate=RATE,
-                input=False,
-                output=True,
-                frames_per_buffer=CHUNK)
-
-
-def tcpConnection():
-    nick = "STMPL"#sys.argv[3]
-    global tcp_conn_status
-    global disconnect
-
-    with socket.socket() as tcp_socket:
-        tcp_socket.bind((HOST, MY_PORT_TCP))
-        tcp_socket.connect((HOST, PORT_TCP))
+    def tcpConnection(self):
+        #tcp_socket.bind((HOST, MY_PORT_TCP))
+        self.tcp_s.connect((self.server_address, self.server_tcp_port))
         #while True:
-        data = 'JOIN ' + nick + ' ' + str(MY_PORT_UDP)
-        tcp_socket.send(bytes(data, 'UTF-8'))
-        data = tcp_socket.recv(1024)
+        data = 'JOIN ' + self.nick + ' ' + str(self.udp_s.getsockname()[1])
+        self.tcp_s.send(bytes(data, 'UTF-8'))
+        data = self.tcp_s.recv(1024)
         decoded = data.decode('UTF-8')
         if (decoded == "OK"):
-            tcp_conn_status = True
-            while True:
-                if (disconnect == True):
-                    tcp.socket.send(bytes("LEAV", 'UTF-8'))
-                    tcp_socket.shutdown(SHUT_RDWR)
-                    tcp_socket.close()
-                    break
+            self.tcp_conn_status = True    
         else:
-            tcp_socket.shutdown(SHUT_RDWR)
-            tcp_socket.close()
-        tcp_conn_status = False
+            self.tcp_s.shutdown(SHUT_RDWR)
+            self.tcp_s.close()
+
+    def disconnect(self):
+        self.tcp_s.send(bytes("LEAV", 'UTF-8'))
+        self.tcp_s.shutdown(SHUT_RDWR)
+        self.tcp_s.close()
+        self.tcp_conn_status = False
 
 
-def udpConnection():
-    global tcp_conn_status
-    global disconnect
-    while True:
-        if (tcp_conn_status == True):
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket:
-                client_socket.bind((HOST, MY_PORT_UDP))
-                while (disconnect == False):
-                    data = rec_stream.read(CHUNK)
-                    client_socket.sendto(data, (HOST, PORT_UDP))
-                    data, address = client_socket.recvfrom(PACKET_SIZE)
-                    play_stream.write(data)
+    def udpSend(self):
+        while True:
+            if (self.tcp_conn_status == True):
+                data = self.rec_stream.read(1024)
+                self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
+                time.sleep(0.8*1024/20000) #time.sleep(0.8*CHUNK/sample_rate)
+            else:
+                break
 
-tcpThread = Thread(target=tcpConnection, args=())
-udpThread = Thread(target=udpConnection, args=())
+    def udpRecv(self):
+        while True:
+            if (self.tcp_conn_status == True):
+                data, addr = self.udp_s.recvfrom(2048)
+                self.play_stream.write(data)
+            else:
+                break
 
-def Start():
-    global tcp_conn_status
-    global disconnect
-    tcpThread.start()
-    for i in range(10):
-        print('connecting')#komunikat "connecting"
-        if (tcp_conn_status == True):
-            break
-        time.sleep(1)
-    if (tcp_conn_status == True):
-        udpThread.start()
-        print('connected')#zmiana na okno rozmowy
-    else:
-        print('error')#wyjeb błąd
-        pass
+    def Start(self):
+        self.set_free_udp_port()
+        print('connecting')
+        self.tcpConnection()#napisać obsługę braku połączenia
 
-def stopConnection():
-    global tcp_conn_status
-    global disconnect
-    disconnect = True
-    while (disconnect == True):
-        if (tcp_conn_status == False):
-            disconnect = False
+        if (self.tcp_conn_status == True):
+            print('connected')#zmiana na okno rozmowy
+        else:
+            print('error')#wyjeb błąd
+            pass
+        
+        recv_thread = Thread(target=self.udpRecv).start()
+        self.udpSend()
 
 if (__name__ == "__main__"):
-    Start()
+    client = Client()
+    client.Start()
