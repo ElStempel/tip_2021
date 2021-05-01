@@ -23,14 +23,17 @@ class Login_Okno(QMainWindow):
         #pole nazwy
         self.nameField = QLineEdit()
         self.nameField.setPlaceholderText("Podaj nazwę użytkownika")
+        self.nameField.setStyleSheet("color: white")
         
         #pole ip
         self.ipField = QLineEdit()
         self.ipField.setPlaceholderText("Podaj ip serwera")
+        self.ipField.setStyleSheet("color: white")
         
         #pole portu
         self.portField = QLineEdit()
         self.portField.setPlaceholderText("Podaj port serwera")
+        self.portField.setStyleSheet("color: white")
         
         #join button
         joinButton = QPushButton()
@@ -45,7 +48,7 @@ class Login_Okno(QMainWindow):
         
         #load button
         loadButton = QPushButton()
-        loadButton.setStyleSheet("background-color: rgb(72, 61, 63); color white")
+        loadButton.setStyleSheet("background-color: rgb(72, 61, 63); color: white")
         loadButton.setText("Wczytaj ustawienia")
         
         #layout
@@ -161,6 +164,7 @@ class Stream_Okno(QMainWindow):
         
         #userBox
         userBox = QGroupBox("Użytkownicy")
+        userBox.setStyleSheet("color: white")
         
         #userBox layout
         boxLayout = QVBoxLayout()
