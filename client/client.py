@@ -10,8 +10,8 @@ class Client:
         self.tcp_conn_status = False
         self.server_udp_port = 5000
         self.server_tcp_port = 5001
-        self.server_address = '127.0.0.1'
-        self.nick = 'Tester'
+        self.server_address = '213.195.160.184'
+        self.nick = 'Stempel'
 
         #audio settings
         CHUNK = 1024

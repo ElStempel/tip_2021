@@ -17,6 +17,7 @@ class Login_Okno(QMainWindow):
         titleText = QLabel()
         titleText.setText("SquadTalk 4")
         titleText.setAlignment(Qt.AlignCenter)
+        titleText.setStyleSheet("color: white")
         titleText.setFont(QFont('Arial',45))
         
         #pole nazwy
@@ -34,17 +35,17 @@ class Login_Okno(QMainWindow):
         #join button
         joinButton = QPushButton()
         joinButton.setText("Dołącz")
-        joinButton.setStyleSheet("background-color: rgb(0, 191, 178)")
+        joinButton.setStyleSheet("background-color: rgb(0, 191, 178); color: white")
         joinButton.clicked.connect(self.joinClicked)
         
         #save button
         saveButton = QPushButton()
-        saveButton.setStyleSheet("background-color: rgb(72, 61, 63)")
+        saveButton.setStyleSheet("background-color: rgb(72, 61, 63); color: white")
         saveButton.setText("Zapisz ustawienia")
         
         #load button
         loadButton = QPushButton()
-        loadButton.setStyleSheet("background-color: rgb(72, 61, 63)")
+        loadButton.setStyleSheet("background-color: rgb(72, 61, 63); color white")
         loadButton.setText("Wczytaj ustawienia")
         
         #layout
@@ -76,19 +77,20 @@ class Stream_Okno(QMainWindow):
         #tytuł (ip i port)
         titleText = QLabel()
         titleText.setText("127.0.0.1:5000")
+        titleText.setStyleSheet("color: white")
         titleText.setAlignment(Qt.AlignCenter)
         titleText.setFont(QFont('Arial',30))
         
         #leave button
         leaveButton = QPushButton()
         leaveButton.setText("Wyjdź")
-        leaveButton.setStyleSheet("background-color: rgb(213, 88, 98)")
+        leaveButton.setStyleSheet("background-color: rgb(213, 88, 98); color: white")
         leaveButton.clicked.connect(self.leaveClicked)
         
         #mute button
         muteButton = QPushButton()
         muteButton.setText("Wycisz")
-        muteButton.setStyleSheet("background-color: rgb(2, 128, 144)")
+        muteButton.setStyleSheet("background-color: rgb(2, 128, 144); color: white")
         muteButton.clicked.connect(self.leaveClicked)
         
         #users
@@ -99,6 +101,7 @@ class Stream_Okno(QMainWindow):
             users.append("user" + str(i+1))
         
         user1 = QTextEdit("")
+        user1.setStyleSheet("color: white")
         user1.setReadOnly(True)
         user1.setFont(QFont('Arial', 16))
         
