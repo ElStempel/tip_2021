@@ -95,7 +95,7 @@ file_problem = False
 ip_regex = "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"
 
 try:
-    file = open("server\config.txt", "r")
+    file = open("config.txt", "r")
     content = file.read().splitlines()
     ip = content[0]
     tcp_port = content[1]
