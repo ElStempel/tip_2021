@@ -22,7 +22,7 @@ class Server:
             self.server_tcp_port = int(tcp_port)
 
 
-        self.server_udp_port = 5000 #do zmiany, będzie wysyłanie w połączeniu tcp
+        #self.server_udp_port = 5000 #do zmiany, będzie wysyłanie w połączeniu tcp
         
         self.userList = []
 
@@ -31,7 +31,7 @@ class Server:
         self.server_tcp_port = self.tcp_s.getsockname()[1]
 
         self.udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_s.bind((self.ip, self.server_udp_port))
+        self.udp_s.bind((self.ip, 0))
 
         print("Server is listening on "+self.ip+':'+str(self.server_tcp_port)+" ...")
         self.userConnections()
@@ -42,42 +42,60 @@ class Server:
             conn, address = self.tcp_s.accept()
             Thread(target=self.newConnection, args=(conn, address)).start()
 
-    def newConnection(self, conn, address): #PORAWIĆ! KAŻDY USER POTRZEBUJE SWOJEGO PORTU UDP?
+    def newConnection(self, conn, address):
         data = conn.recv(1024) #komunikaty: JOIN Nick; LEAV;
         decoded = data.decode('UTF-8')
         message = decoded.split()
         if(message[0] == 'JOIN' and len(message[1]) > 0 and len(message[2]) > 0):
-            print('Received: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
+            
             user = User(conn, message[1], address, int(message[2]))
             self.userList.append(user)
-            conn.send(bytes('OK', 'UTF-8')) #można wysyłać port udp
+
+            #create udp socket for user
+            user_udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            user_udp_s.bind((self.ip, 0))
+
+            #send OK with udp port for audio communication
+            conn.send(bytes('OK '+str(user_udp_s.getsockname()[1]), 'UTF-8'))
+            print("\n"+user.udpAddr[0]+" User "+user.name+" joined server")
+            print("  TCP: "+str(user.tcpAddr[1])+" <-> "+str(self.server_tcp_port))
+            print("  UDP: "+str(user.udpAddr[1])+" <-> "+str(user_udp_s.getsockname()[1]))
+            
+            Thread(target=self.audioStreaming, args=(user_udp_s, user)).start()
+
             while True:
-                self.audioStreaming()
-                data = conn.recv(1024)
-                decoded = data.decode('UTF-8')
-                message = decoded.split()
-                if(message[0] == 'LEAV'):
+                try:
+                    data = conn.recv(1024)
+                    decoded = data.decode('UTF-8')
+                    message = decoded.split()
+                    if(message[0] == 'LEAV'):
+                        self.userList.remove(user)
+                        conn.send(bytes('BYE', 'UTF-8'))
+                        print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected peacefully")
+                        conn.close()
+                        break
+                except socket.error:
                     self.userList.remove(user)
-                    conn.send(bytes('BYE', 'UTF-8'))
+                    print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected forcibly")
                     conn.close()
                     break
         else:
-            print('Received bad data: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
+            print('\nReceived bad data: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
             conn.send(bytes('BAD DATA', 'UTF-8'))
             conn.close()
 
-    def audioStreaming(self):
-            while True:
-                data, address = self.udp_s.recvfrom(2048)
-                for user in self.userList:
-                    if(user.udpAddr != address):
-                        self.udp_s.sendto(data, user.udpAddr)
+    def audioStreaming(self, soc, streamer):
+        while streamer in self.userList:
+            data, address = soc.recvfrom(2048)
+            for user in self.userList:
+                if(user.udpAddr != address):
+                    self.udp_s.sendto(data, user.udpAddr)
 
 file_problem = False
 ip_regex = "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"
 
 try:
-    file = open("config.txt", "r")
+    file = open("server\config.txt", "r")
     content = file.read().splitlines()
     ip = content[0]
     tcp_port = content[1]

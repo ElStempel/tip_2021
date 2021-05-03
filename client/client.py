@@ -8,8 +8,8 @@ from contextlib import closing
 class Client:
     def __init__(self):
         self.tcp_conn_status = False
-        self.server_udp_port = 5000
-        self.server_tcp_port = 5001
+        self.server_udp_port = None
+        self.server_tcp_port = None
         self.server_address = '127.0.0.1'
         self.nick = 'Anonymous'
 
@@ -49,20 +49,21 @@ class Client:
 
     def tcpConnection(self):
         self.tcp_s.connect((self.server_address, self.server_tcp_port))
-        #while True:
         data = 'JOIN ' + self.nick + ' ' + str(self.udp_s.getsockname()[1])
         self.tcp_s.send(bytes(data, 'UTF-8'))
         data = self.tcp_s.recv(1024)
         decoded = data.decode('UTF-8')
-        if (decoded == "OK"):
-            self.tcp_conn_status = True    
+        message = decoded.split()
+        if (message[0] == "OK" and len(message[1]) > 0):
+            self.tcp_conn_status = True
+            self.server_udp_port = int(message[1])
         else:
-            self.tcp_s.shutdown(SHUT_RDWR)
+            self.tcp_s.shutdown(socket.SHUT_RDWR)
             self.tcp_s.close()
 
     def disconnect(self):
         self.tcp_s.send(bytes("LEAV", 'UTF-8'))
-        self.tcp_s.shutdown(SHUT_RDWR)
+        self.tcp_s.shutdown(socket.SHUT_RDWR)
         self.tcp_s.close()
         self.tcp_conn_status = False
 
@@ -103,4 +104,4 @@ class Client:
 
 if (__name__ == "__main__"):
     client = Client()
-    client.Start()
+    client.Start('Tester', '127.0.0.1', 5001)
