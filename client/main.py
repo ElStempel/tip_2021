@@ -60,7 +60,7 @@ class Okno(QMainWindow):
         #settings button
         settingsButton = QPushButton()
         settingsButton.setStyleSheet("background-color: rgb(72, 61, 63); color: white")
-        settingsButton.setFont(QFont('Arial', 25))
+        settingsButton.setFont(QFont('Arial', 20))
         settingsButton.setFixedSize(40,40)
         settingsButton.setText("\u2699")
         settingsButton.clicked.connect(self.settingsClicked)
@@ -104,7 +104,7 @@ class Okno(QMainWindow):
         #second settings button
         second_settingsButton = QPushButton()
         second_settingsButton.setStyleSheet("background-color: rgb(72, 61, 63); color: white")
-        second_settingsButton.setFont(QFont('Arial', 25))
+        second_settingsButton.setFont(QFont('Arial', 20))
         second_settingsButton.setFixedSize(40,40)
         second_settingsButton.setText("\u2699")
         second_settingsButton.clicked.connect(self.settingsClicked)
