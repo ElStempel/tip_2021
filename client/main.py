@@ -290,6 +290,11 @@ class Okno(QMainWindow):
         else:
             self.Stack.setCurrentIndex(0)
     
+    #eventy
+    def closeEvent(self, event):
+        print("Closing")
+        self.voice_client.disconnect()
+    
 
 #App and window initialization
 app = QApplication(sys.argv)
