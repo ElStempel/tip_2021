@@ -50,12 +50,14 @@ class Okno(QMainWindow):
         #save button
         saveButton = QPushButton()
         saveButton.setStyleSheet("background-color: rgb(72, 61, 63); color: white")
-        saveButton.setText("Zapisz ustawienia")
+        saveButton.setText("Zapisz konfigurację")
+        saveButton.clicked.connect(self.saveConf)
         
         #load button
         loadButton = QPushButton()
         loadButton.setStyleSheet("background-color: rgb(72, 61, 63); color: white")
-        loadButton.setText("Wczytaj ustawienia")
+        loadButton.setText("Wczytaj konfigurację")
+        loadButton.clicked.connect(self.loadConf)
         
         #settings button
         settingsButton = QPushButton()
@@ -99,7 +101,7 @@ class Okno(QMainWindow):
         self.muteButton = QPushButton()
         self.muteButton.setText("Wycisz")
         self.muteButton.setStyleSheet("background-color: rgb(2, 128, 144); color: white")
-        #self.muteButton.clicked.connect(self.leaveClicked)
+        self.muteButton.clicked.connect(self.muteClicked)
         
         #second settings button
         second_settingsButton = QPushButton()
@@ -164,18 +166,31 @@ class Okno(QMainWindow):
         
         # USTAWIENIA
         
-        #tytuł
+        #ustawienie 1
         f_settingText = QLabel()
-        f_settingText.setText("Ustawienie 1")
+        f_settingText.setText("Nagrywanie dźwięku")
         f_settingText.setAlignment(Qt.AlignCenter)
         f_settingText.setStyleSheet("color: white")
         f_settingText.setFont(QFont('Arial',20))
         
-        #ComboBox
-        self.cb = QComboBox()
-        self.cb.addItems(["Audio1", "Audio2", "Audio3"])
-        self.cb.currentIndexChanged.connect(self.selectionchange)
-        self.cb.setStyleSheet("color: white")
+        #ComboBox 1
+        self.cb1 = QComboBox()
+        self.cb1.addItems(["Mic1", "Mic2", "Mic3"])
+        self.cb1.currentIndexChanged.connect(self.rec_selectionchange)
+        self.cb1.setStyleSheet("color: white")
+        
+        #ustawienie 2
+        s_settingText = QLabel()
+        s_settingText.setText("Odtwarzanie dźwięku")
+        s_settingText.setAlignment(Qt.AlignCenter)
+        s_settingText.setStyleSheet("color: white")
+        s_settingText.setFont(QFont('Arial',20))
+        
+        #ComboBox 2
+        self.cb2 = QComboBox()
+        self.cb2.addItems(["Spk1", "Spk2", "Spk3"])
+        self.cb2.currentIndexChanged.connect(self.play_selectionchange)
+        self.cb2.setStyleSheet("color: white")
         
         #return button
         
@@ -187,7 +202,9 @@ class Okno(QMainWindow):
         #layout
         self.settingsMenu = QVBoxLayout()
         self.settingsMenu.addWidget(f_settingText)
-        self.settingsMenu.addWidget(self.cb)
+        self.settingsMenu.addWidget(self.cb1)
+        self.settingsMenu.addWidget(s_settingText)
+        self.settingsMenu.addWidget(self.cb2)
         self.settingsMenu.addWidget(returnButton)
         self.settingsMenu.setAlignment(Qt.AlignCenter)
         
@@ -202,25 +219,53 @@ class Okno(QMainWindow):
         self.Stack.addWidget(self.settingsMenuW)
         self.setCentralWidget(self.Stack)
     
-    def selectionchange(self, i):
-        print("Indeks wybranej opcji:" + str(i))
+    #ustawienia
+    def rec_selectionchange(self, i):
+        print("Indeks wybranej opcji nagrywania:" + str(i))
+    
+    def play_selectionchange(self, i):
+        print("Indeks wybranej opcji odtwarzania:" + str(i))
         
+    #odtwarzanie
     def leaveClicked(self):
         print("Leave button clicked")
         global joined
         joined = False
         self.Stack.setCurrentIndex(0)
     
+    def muteClicked(self):
+        print("Mute button clicked")
+    
+    #logowanie
     def joinClicked(self):
         print("Join button clicked")
         global joined
         joined = True
         self.Stack.setCurrentIndex(1)
-        
+    
+    def saveConf(self):
+        file = open("config.txt", "w")
+        L = [self.nameField.text(),"\n", self.ipField.text(),"\n", self.portField.text(),"\n"]
+        file.writelines(L)
+        file.close()
+    
+    def loadConf(self):
+        try:
+            file = open("config.txt", "r")
+            content = file.read().splitlines()
+            self.nameField.setText(content[0])
+            self.ipField.setText(content[1])
+            self.portField.setText(content[2])
+            file.close()
+        except:
+            print("Brak pliku")
+    
+    #all    
     def settingsClicked(self):
         print("Settings button clicked")
         self.Stack.setCurrentIndex(2)
-        
+    
+    #ustawienia    
     def returnClicked(self):
         print("Return button clicked")
         global joined
