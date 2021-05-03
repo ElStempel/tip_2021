@@ -22,7 +22,7 @@ class Okno(QMainWindow):
         self.tabs.addTab(self.tab1, "Dołącz")
         self.tabs.addTab(self.tab2, "Rozmawiaj")
         self.tabs.addTab(self.tab3, "Ustawienia")
-        self.tabs.setStyleSheet("color: white")
+        #self.tabs.setStyleSheet("color: white")
 
         self.setCentralWidget(self.tabs)
 
