@@ -4,7 +4,7 @@ from PyQt5.QtCore import *
 
 from PyQt5 import QtTest
 
-#import client
+import client
 
 import sys
 import re, os
@@ -16,7 +16,11 @@ class Okno(QMainWindow):
     def __init__(self, *args, **kwargs):       
         super(Okno, self).__init__(*args, *kwargs)
         self.setWindowTitle("SquadTalk 4")
- 
+        
+        #KLIENT
+        
+        self.voice_client = client.Client()
+         
         # LOGIN
         
         #tytuł
@@ -85,11 +89,11 @@ class Okno(QMainWindow):
         # STREAM
         
         #tytuł (ip i port)
-        titleText = QLabel()
-        titleText.setText("127.0.0.1:5000")
-        titleText.setStyleSheet("color: white")
-        titleText.setAlignment(Qt.AlignCenter)
-        titleText.setFont(QFont('Arial',30))
+        self.titleText = QLabel()
+        self.titleText.setText("Connected Server")
+        self.titleText.setStyleSheet("color: white")
+        self.titleText.setAlignment(Qt.AlignCenter)
+        self.titleText.setFont(QFont('Arial',30))
         
         #leave button
         self.leaveButton = QPushButton()
@@ -140,7 +144,7 @@ class Okno(QMainWindow):
         #title layout
         titleLayout = QVBoxLayout()
         titleLayout.setAlignment(Qt.AlignTop)
-        titleLayout.addWidget(titleText)
+        titleLayout.addWidget(self.titleText)
         titleLayoutV = QWidget()
         titleLayoutV.setLayout(titleLayout)
         
@@ -231,6 +235,7 @@ class Okno(QMainWindow):
         print("Leave button clicked")
         global joined
         joined = False
+        self.voice_client.disconnect()
         self.Stack.setCurrentIndex(0)
     
     def muteClicked(self):
@@ -241,7 +246,18 @@ class Okno(QMainWindow):
         print("Join button clicked")
         global joined
         joined = True
+        self.joinServer()
+        self.changeText()
         self.Stack.setCurrentIndex(1)
+    
+    def changeText(self):
+        tmp = ""
+        tmp += self.ipField.text() + ":" + self.portField.text()
+        self.titleText.setText(tmp)
+    
+    def joinServer(self):
+        self.voice_client.Start(self.nameField.text(), self.ipField.text(), int(self.portField.text()))
+        pass
     
     def saveConf(self):
         file = open("config.txt", "w")
@@ -277,7 +293,7 @@ class Okno(QMainWindow):
 
 #App and window initialization
 app = QApplication(sys.argv)
-
+app.setQuitOnLastWindowClosed(True)
 window = Okno()
 window.setFixedSize(400, 750)
 window.setStyleSheet("background-color: rgb(37,37,37)")

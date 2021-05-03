@@ -32,10 +32,12 @@ class Client:
                         output=True,
                         frames_per_buffer=CHUNK)
 
+        self.tcp_s = None
+        self.udp_s = None
+
+    def sockets_setup(self):
         self.tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    def set_free_udp_port(self):
         self.udp_s.bind(('', 0))
 
     def set_nick(self, nick):
@@ -57,21 +59,24 @@ class Client:
         if (message[0] == "OK" and len(message[1]) > 0):
             self.tcp_conn_status = True
             self.server_udp_port = int(message[1])
+            #return True
         else:
             self.tcp_s.shutdown(socket.SHUT_RDWR)
             self.tcp_s.close()
+            #return False
 
     def disconnect(self):
         self.tcp_s.send(bytes("LEAV", 'UTF-8'))
         self.tcp_s.shutdown(socket.SHUT_RDWR)
         self.tcp_s.close()
         self.tcp_conn_status = False
+        print("disconnected")
 
 
     def udpSend(self):
         while True:
             if (self.tcp_conn_status == True):
-                data = self.rec_stream.read(1024)
+                data = self.rec_stream.read(1024, exception_on_overflow=False)
                 self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
                 time.sleep(0.8*1024/20000) #time.sleep(0.8*CHUNK/sample_rate)
             else:
@@ -86,7 +91,7 @@ class Client:
                 break
 
     def Start(self, nick, server_addr, server_tcp_port):
-        self.set_free_udp_port()
+        self.sockets_setup()
         self.set_nick(nick)
         self.set_server_addr(server_addr)
         self.set_server_tcp_port(server_tcp_port)
@@ -99,8 +104,8 @@ class Client:
             print('error')#wyrzuć błąd
             pass
         
-        recv_thread = Thread(target=self.udpRecv).start()
-        self.udpSend()
+        Thread(target=self.udpRecv).start()
+        Thread(target=self.udpSend).start()
 
 if (__name__ == "__main__"):
     client = Client()
