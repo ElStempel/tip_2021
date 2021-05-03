@@ -9,9 +9,6 @@ import client
 import sys
 import re, os
 
-#replace with tcp connected z klienta
-joined = False
-
 class Okno(QMainWindow):
     def __init__(self, *args, **kwargs):       
         super(Okno, self).__init__(*args, *kwargs)
@@ -233,8 +230,6 @@ class Okno(QMainWindow):
     #odtwarzanie
     def leaveClicked(self):
         print("Leave button clicked")
-        global joined
-        joined = False
         self.voice_client.disconnect()
         self.Stack.setCurrentIndex(0)
     
@@ -244,8 +239,6 @@ class Okno(QMainWindow):
     #logowanie
     def joinClicked(self):
         print("Join button clicked")
-        global joined
-        joined = True
         self.joinServer()
         self.changeText()
         self.Stack.setCurrentIndex(1)
@@ -284,8 +277,7 @@ class Okno(QMainWindow):
     #ustawienia    
     def returnClicked(self):
         print("Return button clicked")
-        global joined
-        if(joined == True):
+        if(self.voice_client.tcp_conn_status == True):
             self.Stack.setCurrentIndex(1)
         else:
             self.Stack.setCurrentIndex(0)
@@ -293,7 +285,8 @@ class Okno(QMainWindow):
     #eventy
     def closeEvent(self, event):
         print("Closing")
-        self.voice_client.disconnect()
+        if (self.voice_client.tcp_conn_status == True):
+            self.voice_client.disconnect()
     
 
 #App and window initialization
