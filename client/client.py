@@ -10,8 +10,8 @@ class Client:
         self.tcp_conn_status = False
         self.server_udp_port = 5000
         self.server_tcp_port = 5001
-        self.server_address = '213.195.160.184'
-        self.nick = 'Stempel'
+        self.server_address = '127.0.0.1'
+        self.nick = 'Anonymous'
 
         #audio settings
         CHUNK = 1024
@@ -41,8 +41,13 @@ class Client:
     def set_nick(self, nick):
         self.nick = nick
 
+    def set_server_addr(self, ip):
+        self.server_address = ip
+
+    def set_server_tcp_port(self, port):
+        self.server_tcp_port = port
+
     def tcpConnection(self):
-        #tcp_socket.bind((HOST, MY_PORT_TCP))
         self.tcp_s.connect((self.server_address, self.server_tcp_port))
         #while True:
         data = 'JOIN ' + self.nick + ' ' + str(self.udp_s.getsockname()[1])
@@ -79,15 +84,18 @@ class Client:
             else:
                 break
 
-    def Start(self):
+    def Start(self, nick, server_addr, server_tcp_port):
         self.set_free_udp_port()
+        self.set_nick(nick)
+        self.set_server_addr(server_addr)
+        self.set_server_tcp_port(server_tcp_port)
         print('connecting')
         self.tcpConnection()#napisać obsługę braku połączenia
 
         if (self.tcp_conn_status == True):
             print('connected')#zmiana na okno rozmowy
         else:
-            print('error')#wyjeb błąd
+            print('error')#wyrzuć błąd
             pass
         
         recv_thread = Thread(target=self.udpRecv).start()

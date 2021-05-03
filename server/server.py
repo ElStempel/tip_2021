@@ -1,7 +1,7 @@
 import socket
 from threading import Thread
 from contextlib import closing
-
+import sys, re
 class User:
     def __init__(self, tcpConn, name, addr, udpPort):
         self.tcpConn = tcpConn
@@ -10,20 +10,30 @@ class User:
         self.udpAddr = (addr[0],udpPort)
 
 class Server:
-    def __init__(self):
-        self.ip = '127.0.0.1'#socket.gethostbyname(socket.gethostname())
-        self.server_udp_port = 5000
-        self.server_tcp_port = 5001
+    def __init__(self, ip, tcp_port):
+        if(ip.lower() == 'auto' or ip == ''):
+            self.ip = socket.gethostbyname(socket.gethostname())
+        else:
+            self.ip = ip
 
+        if(tcp_port.lower() == 'auto' or tcp_port == ''):
+            self.server_tcp_port = 0
+        else:
+            self.server_tcp_port = int(tcp_port)
+
+
+        self.server_udp_port = 5000 #do zmiany, będzie wysyłanie w połączeniu tcp
+        
         self.userList = []
 
         self.tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_s.bind((self.ip, self.server_tcp_port))
+        self.server_tcp_port = self.tcp_s.getsockname()[1]
 
         self.udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_s.bind((self.ip, self.server_udp_port))
 
-        print("Server is running...")
+        print("Server is listening on "+self.ip+':'+str(self.server_tcp_port)+" ...")
         self.userConnections()
 
     def userConnections(self):
@@ -63,4 +73,27 @@ class Server:
                     if(user.udpAddr != address):
                         self.udp_s.sendto(data, user.udpAddr)
 
-server = Server()
+file_problem = False
+ip_regex = "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"
+
+try:
+    file = open("config.txt", "r")
+    content = file.read().splitlines()
+    ip = content[0]
+    tcp_port = content[1]
+    file.close()
+    if(ip.lower() != 'auto' and ip != '' and not re.search(ip_regex, ip)):
+        raise ValueError('Wrong IP address')
+    if(tcp_port.lower() != 'auto' and tcp_port != '' and (int(tcp_port) > 65535 or int(tcp_port) < 1)):
+        raise ValueError('Wrong port')
+except ValueError as er:
+    print("Config error: "+str(er)+"\nProper config.txt file:\n   1st line is server IP (you may use 'auto' or '')\n   2nd line is server port to listen on (you may use 'auto' or '')")
+    input()
+    file_problem = True
+except:
+    print("Missing proper config.txt file:\n   1st line is server IP (you may use 'auto' or '')\n   2nd line is server port to listen on (you may use 'auto' or '')")
+    input()
+    file_problem = True
+
+if(not file_problem):
+    server = Server(ip, tcp_port)
