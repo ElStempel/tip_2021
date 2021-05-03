@@ -39,6 +39,7 @@ class Client:
         self.tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_s.bind(('', 0))
+        self.udp_s.settimeout(0.1)
 
     def set_nick(self, nick):
         self.nick = nick
@@ -85,8 +86,11 @@ class Client:
     def udpRecv(self):
         while True:
             if (self.tcp_conn_status == True):
-                data, addr = self.udp_s.recvfrom(2048)
-                self.play_stream.write(data)
+                try:
+                    data, addr = self.udp_s.recvfrom(2048)
+                    self.play_stream.write(data)
+                except:
+                    pass
             else:
                 break
 
