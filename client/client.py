@@ -4,6 +4,7 @@ import sys
 from threading import Thread
 import time
 from contextlib import closing
+import platform
 
 class Client:
     def __init__(self):
@@ -14,28 +15,71 @@ class Client:
         self.nick = 'Anonymous'
 
         #audio settings
-        CHUNK = 1024
-        FORMAT = pyaudio.paInt16
-        CHANNELS = 1
-        RATE = 20000
+        self.CHUNK = 1024
+        self.FORMAT = pyaudio.paInt16
+        self.CHANNELS = 1
+        self.RATE = 48000 #must match input audio device
 
         self.tcp_s = None
         self.udp_s = None
+        self.p = pyaudio.PyAudio()
+
+        defaultInputDev = self.p.get_default_input_device_info()
+        defaultOutputDev = self.p.get_default_output_device_info()
+
+        self.inDevId = defaultInputDev.get('index')
+        self.outDevId = defaultOutputDev.get('index')
+
+        inDev, outDev = self.audio_devices()
+        
+        for dev in inDev:
+            if(defaultInputDev.get('name') in dev[1]):
+                self.inDevId = dev[0]
+        
+        for dev in outDev:
+            if(defaultOutputDev.get('name') in dev[1]):
+                self.outDevId = dev[0]
+
+        self.audio_setup(self.inDevId, self.outDevId)
 
     def audio_setup(self, inDevId, outDevId):
         #init mic recording and sound playback
-        #Windows HostAPI: 
-        self.p = pyaudio.PyAudio()
         self.rec_stream = self.p.open(format=self.FORMAT,
                         channels=self.CHANNELS,
                         rate=self.RATE,
                         input=True,
-                        frames_per_buffer=self.CHUNK)
+                        frames_per_buffer=self.CHUNK,
+                        input_device_index=inDevId)
         self.play_stream = self.p.open(format=self.FORMAT,
                         channels=self.CHANNELS,
                         rate=self.RATE,
                         output=True,
-                        frames_per_buffer=self.CHUNK)
+                        frames_per_buffer=self.CHUNK,
+                        output_device_index=outDevId)
+
+    def audio_devices(self):
+        inputDevs = []
+        outputDevs = []
+        #Choose hostapi based on system and list devices
+        if(platform.system() == 'Windows'):
+            hostApi = self.p.get_host_api_info_by_type(pyaudio.paWASAPI)
+            for id in range(self.p.get_device_count()):
+                dev_dict = self.p.get_device_info_by_index(id)
+                if(dev_dict.get('hostApi') == hostApi.get('index')):
+                    if(dev_dict.get('maxInputChannels') > 0):
+                        inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+                    elif(dev_dict.get('maxOutputChannels') > 0):
+                        outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+        else:
+            for id in range(self.p.get_device_count()):
+                dev_dict = self.p.get_device_info_by_index(id)
+                if(dev_dict.get('maxInputChannels') > 0):
+                    inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+                elif(dev_dict.get('maxOutputChannels') > 0):
+                    outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+
+        return inputDevs, outputDevs
+
 
     def sockets_setup(self):
         self.tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
