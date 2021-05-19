@@ -19,21 +19,23 @@ class Client:
         CHANNELS = 1
         RATE = 20000
 
-        #init mic recording and sound playback
-        self.p = pyaudio.PyAudio()
-        self.rec_stream = self.p.open(format=FORMAT,
-                        channels=CHANNELS,
-                        rate=RATE,
-                        input=True,
-                        frames_per_buffer=CHUNK)
-        self.play_stream = self.p.open(format=FORMAT,
-                        channels=CHANNELS,
-                        rate=RATE,
-                        output=True,
-                        frames_per_buffer=CHUNK)
-
         self.tcp_s = None
         self.udp_s = None
+
+    def audio_setup(self, inDevId, outDevId):
+        #init mic recording and sound playback
+        #Windows HostAPI: 
+        self.p = pyaudio.PyAudio()
+        self.rec_stream = self.p.open(format=self.FORMAT,
+                        channels=self.CHANNELS,
+                        rate=self.RATE,
+                        input=True,
+                        frames_per_buffer=self.CHUNK)
+        self.play_stream = self.p.open(format=self.FORMAT,
+                        channels=self.CHANNELS,
+                        rate=self.RATE,
+                        output=True,
+                        frames_per_buffer=self.CHUNK)
 
     def sockets_setup(self):
         self.tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
