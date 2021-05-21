@@ -22,28 +22,18 @@ class Client:
 
         self.tcp_s = None
         self.udp_s = None
+
+        self.refresh_audio_setup()
+
+    def refresh_audio_setup(self):
+        #init mic recording and sound playback
         self.p = pyaudio.PyAudio()
-
-        defaultInputDev = self.p.get_default_input_device_info()
-        defaultOutputDev = self.p.get_default_output_device_info()
-
-        self.inDevId = defaultInputDev.get('index')
-        self.outDevId = defaultOutputDev.get('index')
 
         inDev, outDev = self.audio_devices()
         
-        for dev in inDev:
-            if(defaultInputDev.get('name') in dev[1]):
-                self.inDevId = dev[0]
-        
-        for dev in outDev:
-            if(defaultOutputDev.get('name') in dev[1]):
-                self.outDevId = dev[0]
+        inDevId = inDev[0][0]
+        outDevId = outDev[0][0]
 
-        self.audio_setup(self.inDevId, self.outDevId)
-
-    def audio_setup(self, inDevId, outDevId):
-        #init mic recording and sound playback
         self.rec_stream = self.p.open(format=self.FORMAT,
                         channels=self.CHANNELS,
                         rate=self.RATE,
@@ -58,34 +48,45 @@ class Client:
                         output_device_index=outDevId)
     
     def in_setup(self, inDevId):
-        self.rec_stream = self.p.open(format=self.FORMAT,
-                        channels=self.CHANNELS,
-                        rate=self.RATE,
-                        input=True,
-                        frames_per_buffer=self.CHUNK,
-                        input_device_index=inDevId)
-    
+        try:
+            self.rec_stream = self.p.open(format=self.FORMAT,
+                            channels=self.CHANNELS,
+                            rate=self.RATE,
+                            input=True,
+                            frames_per_buffer=self.CHUNK,
+                            input_device_index=inDevId)
+        except:
+            pass
+        
     def out_setup(self, outDevId):
-        self.play_stream = self.p.open(format=self.FORMAT,
+        try:
+            self.play_stream = self.p.open(format=self.FORMAT,
                         channels=self.CHANNELS,
                         rate=self.RATE,
                         output=True,
                         frames_per_buffer=self.CHUNK,
                         output_device_index=outDevId)
+        except:
+            pass
 
     def audio_devices(self):
         inputDevs = []
         outputDevs = []
+        defaultInputDev = self.p.get_default_input_device_info()
+        defaultOutputDev = self.p.get_default_output_device_info()
+
         #Choose hostapi based on system and list devices
         if(platform.system() == 'Windows'):
             hostApi = self.p.get_host_api_info_by_type(pyaudio.paWASAPI)
             for id in range(self.p.get_device_count()):
                 dev_dict = self.p.get_device_info_by_index(id)
+                print(dev_dict)
                 if(dev_dict.get('hostApi') == hostApi.get('index')):
-                    if(dev_dict.get('maxInputChannels') > 0):
-                        inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
-                    elif(dev_dict.get('maxOutputChannels') > 0):
-                        outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+                    if('SPDIF' not in dev_dict.get('name')):                    
+                        if(dev_dict.get('maxInputChannels') > 0):
+                            inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+                        elif(dev_dict.get('maxOutputChannels') > 0):
+                            outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
         else:
             for id in range(self.p.get_device_count()):
                 dev_dict = self.p.get_device_info_by_index(id)
@@ -93,6 +94,15 @@ class Client:
                     inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
                 elif(dev_dict.get('maxOutputChannels') > 0):
                     outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+
+        #move default to first element in list
+        for i in range(len(inputDevs)):
+            if(defaultInputDev.get('name') in inputDevs[i][1]):
+                inputDevs.insert(0, inputDevs.pop(i))
+
+        for i in range(len(outputDevs)):
+            if(defaultOutputDev.get('name') in outputDevs[i][1]):
+                outputDevs.insert(0, outputDevs.pop(i))
 
         return inputDevs, outputDevs
 
@@ -141,7 +151,7 @@ class Client:
             if (self.tcp_conn_status == True):
                 data = self.rec_stream.read(1024, exception_on_overflow=False)
                 self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
-                time.sleep(0.8*1024/20000) #time.sleep(0.8*CHUNK/sample_rate)
+                time.sleep(0.8*1024/48000) #time.sleep(0.8*CHUNK/sample_rate)
             else:
                 break
 
@@ -172,6 +182,12 @@ class Client:
         
         Thread(target=self.udpRecv).start()
         Thread(target=self.udpSend).start()
+
+    def mute(self):
+        if(self.rec_stream.is_stopped()):
+            self.rec_stream.start_stream()
+        else:
+            self.rec_stream.stop_stream()
 
 if (__name__ == "__main__"):
     client = Client()
