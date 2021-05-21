@@ -201,8 +201,13 @@ class Okno(QMainWindow):
         self.cb2.currentIndexChanged.connect(self.play_selectionchange)
         self.cb2.setStyleSheet("color: white")
         
-        #return button
+        #refresh button
+        refreshButton = QPushButton()
+        refreshButton.setText("Odśwież listę urządzeń")
+        refreshButton.setStyleSheet("background-color: rgb(0, 191, 178); color: white")
+        refreshButton.clicked.connect(self.refreshClicked)
         
+        #return button
         returnButton = QPushButton()
         returnButton.setText("Powrót")
         returnButton.setStyleSheet("background-color: rgb(0, 191, 178); color: white")
@@ -214,6 +219,7 @@ class Okno(QMainWindow):
         self.settingsMenu.addWidget(self.cb1)
         self.settingsMenu.addWidget(s_settingText)
         self.settingsMenu.addWidget(self.cb2)
+        self.settingsMenu.addWidget(refreshButton)
         self.settingsMenu.addWidget(returnButton)
         self.settingsMenu.setAlignment(Qt.AlignCenter)
         
@@ -231,20 +237,22 @@ class Okno(QMainWindow):
     #ustawienia
     def rec_selectionchange(self, i):
         print("Indeks wybranej opcji nagrywania:" + str(i))
-        indexes = []
-        for in_d in self.input_devices:
-            indexes.append(in_d[0])
-        in_choosen = indexes[i]
-        self.voice_client.in_setup(in_choosen)
+        if i > -1:
+            indexes = []
+            for in_d in self.input_devices:
+                indexes.append(in_d[0])
+            in_choosen = indexes[i]
+            self.voice_client.in_setup(in_choosen)
         
     
     def play_selectionchange(self, i):
         print("Indeks wybranej opcji odtwarzania:" + str(i))
-        indexes = []
-        for out_d in self.output_devices:
-            indexes.append(out_d[0])
-        out_choosen = indexes[i]
-        self.voice_client.out_setup(out_choosen)
+        if i > -1:
+            indexes = []
+            for out_d in self.output_devices:
+                indexes.append(out_d[0])
+            out_choosen = indexes[i]
+            self.voice_client.out_setup(out_choosen)
         
     #odtwarzanie
     def leaveClicked(self):
@@ -258,9 +266,12 @@ class Okno(QMainWindow):
     #logowanie
     def joinClicked(self):
         print("Join button clicked")
-        self.joinServer()
-        self.changeText()
-        self.Stack.setCurrentIndex(1)
+        try:
+            self.joinServer()
+            self.changeText()
+            self.Stack.setCurrentIndex(1)
+        except:
+            print("Connection error")
     
     def changeText(self):
         tmp = ""
@@ -269,7 +280,6 @@ class Okno(QMainWindow):
     
     def joinServer(self):
         self.voice_client.Start(self.nameField.text(), self.ipField.text(), int(self.portField.text()))
-        pass
     
     def saveConf(self):
         file = open("config.txt", "w")
@@ -300,6 +310,20 @@ class Okno(QMainWindow):
             self.Stack.setCurrentIndex(1)
         else:
             self.Stack.setCurrentIndex(0)
+    
+    def refreshClicked(self):
+        self.input_devices, self.output_devices = self.voice_client.audio_devices()
+        self.cb1.clear()
+        self.cb2.clear()
+        tmp1 = []
+        for in_d in self.input_devices:
+            tmp1.append(in_d[1])
+        self.cb1.addItems(tmp1)
+        tmp2 = []
+        for out_d in self.output_devices:
+            tmp2.append(out_d[1])
+        self.cb2.addItems(tmp2)
+        
     
     #eventy
     def closeEvent(self, event):
