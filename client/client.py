@@ -56,6 +56,22 @@ class Client:
                         output=True,
                         frames_per_buffer=self.CHUNK,
                         output_device_index=outDevId)
+    
+    def in_setup(self, inDevId):
+        self.rec_stream = self.p.open(format=self.FORMAT,
+                        channels=self.CHANNELS,
+                        rate=self.RATE,
+                        input=True,
+                        frames_per_buffer=self.CHUNK,
+                        input_device_index=inDevId)
+    
+    def out_setup(self, outDevId):
+        self.play_stream = self.p.open(format=self.FORMAT,
+                        channels=self.CHANNELS,
+                        rate=self.RATE,
+                        output=True,
+                        frames_per_buffer=self.CHUNK,
+                        output_device_index=outDevId)
 
     def audio_devices(self):
         inputDevs = []

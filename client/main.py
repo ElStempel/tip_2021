@@ -176,7 +176,12 @@ class Okno(QMainWindow):
         
         #ComboBox 1
         self.cb1 = QComboBox()
-        self.cb1.addItems(["Mic1", "Mic2", "Mic3"])
+        self.input_devices, self.output_devices = self.voice_client.audio_devices()
+        tmp1 = []
+        for in_d in self.input_devices:
+            tmp1.append(in_d[1])
+        
+        self.cb1.addItems(tmp1) #["Mic1", "Mic2", "Mic3"]
         self.cb1.currentIndexChanged.connect(self.rec_selectionchange)
         self.cb1.setStyleSheet("color: white")
         
@@ -189,7 +194,10 @@ class Okno(QMainWindow):
         
         #ComboBox 2
         self.cb2 = QComboBox()
-        self.cb2.addItems(["Spk1", "Spk2", "Spk3"])
+        tmp2 = []
+        for out_d in self.output_devices:
+            tmp2.append(out_d[1])
+        self.cb2.addItems(tmp2) #["Spk1", "Spk2", "Spk3"]
         self.cb2.currentIndexChanged.connect(self.play_selectionchange)
         self.cb2.setStyleSheet("color: white")
         
@@ -223,9 +231,20 @@ class Okno(QMainWindow):
     #ustawienia
     def rec_selectionchange(self, i):
         print("Indeks wybranej opcji nagrywania:" + str(i))
+        indexes = []
+        for in_d in self.input_devices:
+            indexes.append(in_d[0])
+        in_choosen = indexes[i]
+        self.voice_client.in_setup(in_choosen)
+        
     
     def play_selectionchange(self, i):
         print("Indeks wybranej opcji odtwarzania:" + str(i))
+        indexes = []
+        for out_d in self.output_devices:
+            indexes.append(out_d[0])
+        out_choosen = indexes[i]
+        self.voice_client.out_setup(out_choosen)
         
     #odtwarzanie
     def leaveClicked(self):
