@@ -14,11 +14,13 @@ class Client:
         self.server_address = '127.0.0.1'
         self.nick = 'Anonymous'
 
+        self.BUFF_SIZE = 65536
+
         #audio settings
-        self.CHUNK = 1024
+        self.CHUNK = 512
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
-        self.RATE = 48000 #must match input audio device
+        self.RATE = 20000 #must match input audio device
 
         self.tcp_s = None
         self.udp_s = None
@@ -77,34 +79,37 @@ class Client:
         defaultInputDev = self.p.get_default_input_device_info()
         defaultOutputDev = self.p.get_default_output_device_info()
 
-        #Choose hostapi based on system and list devices
-        if(platform.system() == 'Windows'):
-            hostApi = self.p.get_host_api_info_by_type(pyaudio.paWASAPI)
-            for id in range(self.p.get_device_count()):
-                dev_dict = self.p.get_device_info_by_index(id)
-                print(dev_dict)
-                if(dev_dict.get('hostApi') == hostApi.get('index')):
-                    if('SPDIF' not in dev_dict.get('name')):                    
-                        if(dev_dict.get('maxInputChannels') > 0):
-                            inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
-                        elif(dev_dict.get('maxOutputChannels') > 0):
-                            outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
-        else:
-            for id in range(self.p.get_device_count()):
-                dev_dict = self.p.get_device_info_by_index(id)
-                if(dev_dict.get('maxInputChannels') > 0):
-                    inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
-                elif(dev_dict.get('maxOutputChannels') > 0):
-                    outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+        # #Choose hostapi based on system and list devices
+        # if(platform.system() == 'Windows'):
+        #     hostApi = self.p.get_host_api_info_by_type(pyaudio.paWASAPI)
+        #     for id in range(self.p.get_device_count()):
+        #         dev_dict = self.p.get_device_info_by_index(id)
+        #         #if(dev_dict.get('hostApi') == hostApi.get('index')):
+        #         if('SPDIF' not in dev_dict.get('name')):                    
+        #             if(dev_dict.get('maxInputChannels') > 0):
+        #                 inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+        #             elif(dev_dict.get('maxOutputChannels') > 0):
+        #                 outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+        # else:
+        #     for id in range(self.p.get_device_count()):
+        #         dev_dict = self.p.get_device_info_by_index(id)
+        #         if(dev_dict.get('maxInputChannels') > 0):
+        #             inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+        #         elif(dev_dict.get('maxOutputChannels') > 0):
+        #             outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
 
         #move default to first element in list
-        for i in range(len(inputDevs)):
-            if(defaultInputDev.get('name') in inputDevs[i][1]):
-                inputDevs.insert(0, inputDevs.pop(i))
+        # for i in range(len(inputDevs)):
+        #     if(defaultInputDev.get('name') in inputDevs[i][1]):
+        #         inputDevs.insert(0, inputDevs.pop(i))
 
-        for i in range(len(outputDevs)):
-            if(defaultOutputDev.get('name') in outputDevs[i][1]):
-                outputDevs.insert(0, outputDevs.pop(i))
+        # for i in range(len(outputDevs)):
+        #     if(defaultOutputDev.get('name') in outputDevs[i][1]):
+        #         outputDevs.insert(0, outputDevs.pop(i))
+        
+        inputDevs.append((defaultInputDev.get('index'), defaultInputDev.get('name')))
+        outputDevs.append((defaultOutputDev.get('index'), defaultOutputDev.get('name')))
+
 
         return inputDevs, outputDevs
 
@@ -112,8 +117,10 @@ class Client:
     def sockets_setup(self):
         self.tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_s.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,self.BUFF_SIZE)
         self.udp_s.bind(('', 0))
-        self.udp_s.settimeout(0.1)
+        self.udp_s.settimeout(0.2)
+        self.tcp_s.settimeout(1)
 
     def set_nick(self, nick):
         self.nick = nick
@@ -153,9 +160,9 @@ class Client:
         while True:
             if (self.tcp_conn_status == True):
                 if(self.muted == False):
-                    data = self.rec_stream.read(1024, exception_on_overflow=False)
+                    data = self.rec_stream.read(self.CHUNK, exception_on_overflow=False)
                     self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
-                    time.sleep(0.8*1024/48000) #time.sleep(0.8*CHUNK/sample_rate)
+                    time.sleep(0.8*self.CHUNK/self.RATE) #time.sleep(0.8*CHUNK/sample_rate)
             else:
                 break
 
@@ -176,7 +183,7 @@ class Client:
         self.set_server_addr(server_addr)
         self.set_server_tcp_port(server_tcp_port)
         print('connecting')
-        self.tcpConnection()#napisać obsługę braku połączenia
+        self.tcpConnection()
 
         if (self.tcp_conn_status == True):
             print('connected')#zmiana na okno rozmowy
