@@ -23,6 +23,8 @@ class Client:
         self.tcp_s = None
         self.udp_s = None
 
+        self.muted = False
+
         self.refresh_audio_setup()
 
     def refresh_audio_setup(self):
@@ -147,11 +149,13 @@ class Client:
 
 
     def udpSend(self):
+        self.muted = False
         while True:
             if (self.tcp_conn_status == True):
-                data = self.rec_stream.read(1024, exception_on_overflow=False)
-                self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
-                time.sleep(0.8*1024/48000) #time.sleep(0.8*CHUNK/sample_rate)
+                if(self.muted == False):
+                    data = self.rec_stream.read(1024, exception_on_overflow=False)
+                    self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
+                    time.sleep(0.8*1024/48000) #time.sleep(0.8*CHUNK/sample_rate)
             else:
                 break
 
@@ -184,10 +188,12 @@ class Client:
         Thread(target=self.udpSend).start()
 
     def mute(self):
-        if(self.rec_stream.is_stopped()):
-            self.rec_stream.start_stream()
+        if(self.muted == False):
+            self.muted = True
         else:
-            self.rec_stream.stop_stream()
+            self.muted = False
+            
+        return self.muted
 
 if (__name__ == "__main__"):
     client = Client()
