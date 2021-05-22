@@ -277,6 +277,10 @@ class Okno(QMainWindow):
             self.Stack.setCurrentIndex(1)
         except:
             print("Connection error")
+            msg = QMessageBox()
+            msg.setWindowTitle("UWAGA!")
+            msg.setText("Nie udało się połączyć")
+            msg.exec_()
     
     def changeText(self):
         tmp = ""
