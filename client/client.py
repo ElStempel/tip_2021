@@ -17,7 +17,7 @@ class Client:
         self.BUFF_SIZE = 65536
 
         #audio settings
-        self.CHUNK = 512
+        self.CHUNK = 32
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
         self.RATE = 20000 #must match input audio device
@@ -158,11 +158,13 @@ class Client:
     def udpSend(self):
         self.muted = False
         while True:
-            if (self.tcp_conn_status == True):
+            if (self.tcp_conn_status == True):            
                 if(self.muted == False):
                     data = self.rec_stream.read(self.CHUNK, exception_on_overflow=False)
-                    self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
-                    time.sleep(0.8*self.CHUNK/self.RATE) #time.sleep(0.8*CHUNK/sample_rate)
+                else:
+                    data = b''
+                self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
+                #time.sleep(0.8*self.CHUNK/self.RATE) #time.sleep(0.8*CHUNK/sample_rate)
             else:
                 break
 
