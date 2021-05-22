@@ -262,8 +262,11 @@ class Okno(QMainWindow):
     
     def muteClicked(self):
         print("Mute button clicked")
-        self.voice_client.mute()
-        self.muteButton.setText("Odcisz")
+        muted = self.voice_client.mute()
+        if muted == True:
+            self.muteButton.setText("Odcisz")
+        else:
+            self.muteButton.setText("Wycisz")
     
     #logowanie
     def joinClicked(self):
