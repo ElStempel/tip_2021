@@ -173,10 +173,13 @@ class Client:
 
             except:
                 if(self.tcp_conn_status == True):
-                    self.tcp_s.shutdown(socket.SHUT_RDWR)
-                    self.tcp_s.close()
-                    self.tcp_conn_status = False
-                    print('server connection error')
+                    try:
+                        self.tcp_s.shutdown(socket.SHUT_RDWR)
+                        self.tcp_s.close()
+                        self.tcp_conn_status = False
+                        print('server connection error')
+                    except:
+                        pass
                 break
 
 
