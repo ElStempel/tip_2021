@@ -28,6 +28,7 @@ class Client:
         self.udp_s = None
 
         self.muted = False
+        self.usersList = []
 
         self.refresh_audio_setup()
 
@@ -157,10 +158,19 @@ class Client:
             
                 if len(ready_to_read) > 0:
                     recv = self.tcp_s.recv(1024)
-                    print('received: ', recv.decode('UTF-8'))
-                # if len(ready_to_write) > 0:
-                #     # connection established, send some stuff
-                #     self.tcp_s.send('some stuff')
+                    decoded = recv.decode('UTF-8')
+                    message = decoded.split()
+                    if (message[0] == "LIST"):
+                        users = []
+                        for i in range(1, len(message)):
+                            users.append(message[i])
+                        self.usersList = users
+
+                time.sleep(1)
+
+                if len(ready_to_write) > 0:
+                    self.tcp_s.send(bytes('AWLI', 'UTF-8'))
+
             except:
                 if(self.tcp_conn_status == True):
                     self.tcp_s.shutdown(socket.SHUT_RDWR)
@@ -181,7 +191,6 @@ class Client:
 
 
     def udpSend(self):
-        self.muted = False
         while True:
             if (self.tcp_conn_status == True):            
                 if(self.muted == False):
@@ -209,6 +218,8 @@ class Client:
         self.set_nick(nick)
         self.set_server_addr(server_addr)
         self.set_server_tcp_port(server_tcp_port)
+        self.muted = False
+        self.usersList = []
         print('connecting')
         self.tcp_s.connect((self.server_address, self.server_tcp_port))
         print('connected')

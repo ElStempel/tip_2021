@@ -39,7 +39,6 @@ class Server:
 
     def userConnections(self):
         self.tcp_s.listen(25)
-        Thread(target=self.sendUserList).start()
         while True:
             conn, address = self.tcp_s.accept()
             Thread(target=self.newConnection, args=(conn, address)).start()
@@ -76,6 +75,12 @@ class Server:
                         print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected peacefully")
                         conn.close()
                         break
+                    elif(message[0] == 'AWLI'):
+                        message = 'LIST'
+                        for user in self.userList:
+                            message += ' '+str(user.name)
+                        conn.send(bytes(message, 'UTF-8'))
+
                 except socket.error:
                     self.userList.remove(user)
                     print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected forcibly")
@@ -92,15 +97,6 @@ class Server:
             for user in self.userList:
                 if(user.udpAddr != address):
                     self.udp_s.sendto(data, user.udpAddr)
-
-    def sendUserList(self):
-        while True:
-            time.sleep(1)
-            users = []
-            for user in self.userList:
-                users.append(user.name)
-            for user in self.userList:
-                user.tcpConn.send(bytes('LIST '+str(users), 'UTF-8'))
 
 file_problem = False
 ip_regex = "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"
