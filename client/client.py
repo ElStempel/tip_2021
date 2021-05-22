@@ -1,4 +1,6 @@
+from os import error
 import socket
+import select
 import pyaudio
 import sys
 from threading import Thread
@@ -132,7 +134,6 @@ class Client:
         self.server_tcp_port = port
 
     def tcpConnection(self):
-        self.tcp_s.connect((self.server_address, self.server_tcp_port))
         data = 'JOIN ' + self.nick + ' ' + str(self.udp_s.getsockname()[1])
         self.tcp_s.send(bytes(data, 'UTF-8'))
         data = self.tcp_s.recv(1024)
@@ -141,11 +142,35 @@ class Client:
         if (message[0] == "OK" and len(message[1]) > 0):
             self.tcp_conn_status = True
             self.server_udp_port = int(message[1])
-            #return True
+            #Start voice voice streaming
+            Thread(target=self.udpRecv).start()
+            Thread(target=self.udpSend).start()
         else:
             self.tcp_s.shutdown(socket.SHUT_RDWR)
             self.tcp_s.close()
-            #return False
+
+        while(self.tcp_conn_status == True):
+            #check if everything is ok
+            try:
+                ready_to_read, ready_to_write, in_error = \
+                    select.select([self.tcp_s,], [self.tcp_s,], [], 5)
+            
+                if len(ready_to_read) > 0:
+                    recv = self.tcp_s.recv(1024)
+                    print('received: ', recv.decode('UTF-8'))
+                # if len(ready_to_write) > 0:
+                #     # connection established, send some stuff
+                #     self.tcp_s.send('some stuff')
+            except:
+                if(self.tcp_conn_status == False):
+                    self.tcp_s.shutdown(socket.SHUT_RDWR)
+                    self.tcp_s.close()
+                    self.tcp_conn_status = False
+                    print('server connection error')
+                break
+
+
+
 
     def disconnect(self):
         self.tcp_s.send(bytes("LEAV", 'UTF-8'))
@@ -185,16 +210,9 @@ class Client:
         self.set_server_addr(server_addr)
         self.set_server_tcp_port(server_tcp_port)
         print('connecting')
-        self.tcpConnection()
-
-        if (self.tcp_conn_status == True):
-            print('connected')#zmiana na okno rozmowy
-        else:
-            print('error')#wyrzuć błąd
-            pass
-        
-        Thread(target=self.udpRecv).start()
-        Thread(target=self.udpSend).start()
+        self.tcp_s.connect((self.server_address, self.server_tcp_port))
+        print('connected')
+        Thread(target=self.tcpConnection).start()
 
     def mute(self):
         if(self.muted == False):

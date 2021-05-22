@@ -279,7 +279,7 @@ class Okno(QMainWindow):
             print("Connection error")
             msg = QMessageBox()
             msg.setWindowTitle("UWAGA!")
-            msg.setText("Nie udało się połączyć")
+            msg.setText("Nie udało się połączyć z serwerem. Błędny adres lub port.")
             msg.exec_()
     
     def changeText(self):

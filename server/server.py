@@ -2,6 +2,7 @@ import socket
 from threading import Thread
 from contextlib import closing
 import sys, re
+import time
 class User:
     def __init__(self, tcpConn, name, addr, udpPort):
         self.tcpConn = tcpConn
@@ -38,6 +39,7 @@ class Server:
 
     def userConnections(self):
         self.tcp_s.listen(25)
+        Thread(target=self.sendUserList).start()
         while True:
             conn, address = self.tcp_s.accept()
             Thread(target=self.newConnection, args=(conn, address)).start()
@@ -90,6 +92,15 @@ class Server:
             for user in self.userList:
                 if(user.udpAddr != address):
                     self.udp_s.sendto(data, user.udpAddr)
+
+    def sendUserList(self):
+        while True:
+            time.sleep(1)
+            users = []
+            for user in self.userList:
+                users.append(user.name)
+            for user in self.userList:
+                user.tcpConn.send(bytes('LIST '+str(users), 'UTF-8'))
 
 file_problem = False
 ip_regex = "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"
