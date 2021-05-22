@@ -162,7 +162,7 @@ class Client:
                 #     # connection established, send some stuff
                 #     self.tcp_s.send('some stuff')
             except:
-                if(self.tcp_conn_status == False):
+                if(self.tcp_conn_status == True):
                     self.tcp_s.shutdown(socket.SHUT_RDWR)
                     self.tcp_s.close()
                     self.tcp_conn_status = False
