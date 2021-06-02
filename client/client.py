@@ -16,6 +16,8 @@ class Client:
         self.server_address = '127.0.0.1'
         self.nick = 'Anonymous'
 
+        self.guiMessage = 0
+
         self.BUFF_SIZE = 65536
 
         #audio settings
@@ -177,7 +179,7 @@ class Client:
                         self.tcp_s.shutdown(socket.SHUT_RDWR)
                         self.tcp_s.close()
                         self.tcp_conn_status = False
-                        print('server connection error')
+                        self.guiMessage = 1
                     except:
                         pass
                 break
@@ -192,7 +194,6 @@ class Client:
             self.tcp_s.close()
             self.tcp_conn_status = False
         except:
-            self.tcp_s.shutdown(socket.SHUT_RDWR)
             self.tcp_s.close()
             self.tcp_conn_status = False
         print("disconnected")
