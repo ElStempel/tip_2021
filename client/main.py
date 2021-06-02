@@ -114,20 +114,25 @@ class Okno(QMainWindow):
         
         #users
         
-        userList = []
-        tmpstring = ""
-        for i in range(25):
-            userList.append("user" + str(i+1))
+        # userList = []
+        # tmpstring = ""
+        # for i in range(25):
+        #     userList.append("user" + str(i+1))
         
-        users = QTextEdit("")
-        users.setStyleSheet("color: white")
-        users.setReadOnly(True)
-        users.setFont(QFont('Arial', 16))
+        self.users = QTextEdit("")
+        self.users.setStyleSheet("color: white")
+        self.users.setReadOnly(True)
+        self.users.setFont(QFont('Arial', 16))
+        self.users.setText("")
         
-        for u in userList:
-            tmpstring += u + "\n"
+        self.timer  = QTimer(self)
+        self.timer.setInterval(1000)          # Throw event timeout with an interval of 1000 milliseconds
+        self.timer.timeout.connect(self.load_users)
+        self.timer.start()
         
-        users.setText(tmpstring)
+        # for u in userList:
+        #     tmpstring += u + "\n"
+        
             
         #userBox
         userBox = QGroupBox("Użytkownicy")
@@ -135,7 +140,7 @@ class Okno(QMainWindow):
         
         #userBox layout
         boxLayout = QVBoxLayout()
-        boxLayout.addWidget(users)
+        boxLayout.addWidget(self.users)
         userBox.setLayout(boxLayout)
         
         #title layout
@@ -340,6 +345,12 @@ class Okno(QMainWindow):
         if (self.voice_client.tcp_conn_status == True):
             self.voice_client.disconnect()
     
+    def load_users(self):
+        usrList = self.voice_client.usersList
+        tmp = ""
+        for usr in usrList:
+            tmp += usr + "\n"
+        self.users.setText(tmp)
 
 #App and window initialization
 app = QApplication(sys.argv)
