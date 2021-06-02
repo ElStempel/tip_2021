@@ -114,20 +114,30 @@ class Okno(QMainWindow):
         
         #users
         
-        userList = []
-        tmpstring = ""
-        for i in range(25):
-            userList.append("user" + str(i+1))
+        # userList = []
+        # tmpstring = ""
+        # for i in range(25):
+        #     userList.append("user" + str(i+1))
         
-        users = QTextEdit("")
-        users.setStyleSheet("color: white")
-        users.setReadOnly(True)
-        users.setFont(QFont('Arial', 16))
+        self.users = QTextEdit("")
+        self.users.setStyleSheet("color: white")
+        self.users.setReadOnly(True)
+        self.users.setFont(QFont('Arial', 16))
+        self.users.setText("")
         
-        for u in userList:
-            tmpstring += u + "\n"
+        self.timer  = QTimer(self)
+        self.timer.setInterval(1000)          # Throw event timeout with an interval of 1000 milliseconds
+        self.timer.timeout.connect(self.load_users)
+        self.timer.start()
         
-        users.setText(tmpstring)
+        self.timer2  = QTimer(self)
+        self.timer2.setInterval(500)          # Throw event timeout with an interval of 1000 milliseconds
+        self.timer2.timeout.connect(self.messages)
+        self.timer2.start()
+        
+        # for u in userList:
+        #     tmpstring += u + "\n"
+        
             
         #userBox
         userBox = QGroupBox("Użytkownicy")
@@ -135,7 +145,7 @@ class Okno(QMainWindow):
         
         #userBox layout
         boxLayout = QVBoxLayout()
-        boxLayout.addWidget(users)
+        boxLayout.addWidget(self.users)
         userBox.setLayout(boxLayout)
         
         #title layout
@@ -176,7 +186,12 @@ class Okno(QMainWindow):
         
         #ComboBox 1
         self.cb1 = QComboBox()
-        self.cb1.addItems(["Mic1", "Mic2", "Mic3"])
+        self.input_devices, self.output_devices = self.voice_client.audio_devices()
+        tmp1 = []
+        for in_d in self.input_devices:
+            tmp1.append(in_d[1])
+        
+        self.cb1.addItems(tmp1) #["Mic1", "Mic2", "Mic3"]
         self.cb1.currentIndexChanged.connect(self.rec_selectionchange)
         self.cb1.setStyleSheet("color: white")
         
@@ -189,12 +204,20 @@ class Okno(QMainWindow):
         
         #ComboBox 2
         self.cb2 = QComboBox()
-        self.cb2.addItems(["Spk1", "Spk2", "Spk3"])
+        tmp2 = []
+        for out_d in self.output_devices:
+            tmp2.append(out_d[1])
+        self.cb2.addItems(tmp2) #["Spk1", "Spk2", "Spk3"]
         self.cb2.currentIndexChanged.connect(self.play_selectionchange)
         self.cb2.setStyleSheet("color: white")
         
-        #return button
+        #refresh button
+        refreshButton = QPushButton()
+        refreshButton.setText("Odśwież listę urządzeń")
+        refreshButton.setStyleSheet("background-color: rgb(0, 191, 178); color: white")
+        refreshButton.clicked.connect(self.refreshClicked)
         
+        #return button
         returnButton = QPushButton()
         returnButton.setText("Powrót")
         returnButton.setStyleSheet("background-color: rgb(0, 191, 178); color: white")
@@ -206,6 +229,7 @@ class Okno(QMainWindow):
         self.settingsMenu.addWidget(self.cb1)
         self.settingsMenu.addWidget(s_settingText)
         self.settingsMenu.addWidget(self.cb2)
+        self.settingsMenu.addWidget(refreshButton)
         self.settingsMenu.addWidget(returnButton)
         self.settingsMenu.setAlignment(Qt.AlignCenter)
         
@@ -223,9 +247,22 @@ class Okno(QMainWindow):
     #ustawienia
     def rec_selectionchange(self, i):
         print("Indeks wybranej opcji nagrywania:" + str(i))
+        if i > -1:
+            indexes = []
+            for in_d in self.input_devices:
+                indexes.append(in_d[0])
+            in_choosen = indexes[i]
+            self.voice_client.in_setup(in_choosen)
+        
     
     def play_selectionchange(self, i):
         print("Indeks wybranej opcji odtwarzania:" + str(i))
+        if i > -1:
+            indexes = []
+            for out_d in self.output_devices:
+                indexes.append(out_d[0])
+            out_choosen = indexes[i]
+            self.voice_client.out_setup(out_choosen)
         
     #odtwarzanie
     def leaveClicked(self):
@@ -235,13 +272,25 @@ class Okno(QMainWindow):
     
     def muteClicked(self):
         print("Mute button clicked")
+        muted = self.voice_client.mute()
+        if muted == True:
+            self.muteButton.setText("Odcisz")
+        else:
+            self.muteButton.setText("Wycisz")
     
     #logowanie
     def joinClicked(self):
         print("Join button clicked")
-        self.joinServer()
-        self.changeText()
-        self.Stack.setCurrentIndex(1)
+        try:
+            self.joinServer()
+            self.changeText()
+            self.Stack.setCurrentIndex(1)
+        except:
+            print("Connection error")
+            msg = QMessageBox()
+            msg.setWindowTitle("UWAGA!")
+            msg.setText("Nie udało się połączyć z serwerem. Błędny adres lub port.")
+            msg.exec_()
     
     def changeText(self):
         tmp = ""
@@ -250,7 +299,6 @@ class Okno(QMainWindow):
     
     def joinServer(self):
         self.voice_client.Start(self.nameField.text(), self.ipField.text(), int(self.portField.text()))
-        pass
     
     def saveConf(self):
         file = open("config.txt", "w")
@@ -282,12 +330,43 @@ class Okno(QMainWindow):
         else:
             self.Stack.setCurrentIndex(0)
     
+    def refreshClicked(self):
+        self.input_devices, self.output_devices = self.voice_client.audio_devices()
+        self.cb1.clear()
+        self.cb2.clear()
+        tmp1 = []
+        for in_d in self.input_devices:
+            tmp1.append(in_d[1])
+        self.cb1.addItems(tmp1)
+        tmp2 = []
+        for out_d in self.output_devices:
+            tmp2.append(out_d[1])
+        self.cb2.addItems(tmp2)
+        
+    
     #eventy
     def closeEvent(self, event):
         print("Closing")
         if (self.voice_client.tcp_conn_status == True):
             self.voice_client.disconnect()
     
+    def load_users(self):
+        usrList = self.voice_client.usersList
+        tmp = ""
+        for usr in usrList:
+            tmp += usr + "\n"
+        self.users.setText(tmp)
+    
+    def messages(self):
+        if self.voice_client.guiMessage != 0:
+            if self.voice_client.guiMessage == 1:
+                print("Rozłączono z serwerem. Spróbuj ponownie...")
+                msg2 = QMessageBox()
+                msg2.setWindowTitle("UWAGA!")
+                msg2.setText("Rozłączono z serwerem. Spróbuj ponownie...")
+                msg2.exec_()
+                self.Stack.setCurrentIndex(0)
+                self.voice_client.guiMessage = 0
 
 #App and window initialization
 app = QApplication(sys.argv)

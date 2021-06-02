@@ -2,6 +2,7 @@ import socket
 from threading import Thread
 from contextlib import closing
 import sys, re
+import time
 class User:
     def __init__(self, tcpConn, name, addr, udpPort):
         self.tcpConn = tcpConn
@@ -74,6 +75,12 @@ class Server:
                         print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected peacefully")
                         conn.close()
                         break
+                    elif(message[0] == 'AWLI'):
+                        message = 'LIST'
+                        for user in self.userList:
+                            message += ' '+str(user.name)
+                        conn.send(bytes(message, 'UTF-8'))
+
                 except socket.error:
                     self.userList.remove(user)
                     print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected forcibly")
