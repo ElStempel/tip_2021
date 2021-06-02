@@ -130,6 +130,11 @@ class Okno(QMainWindow):
         self.timer.timeout.connect(self.load_users)
         self.timer.start()
         
+        self.timer2  = QTimer(self)
+        self.timer2.setInterval(500)          # Throw event timeout with an interval of 1000 milliseconds
+        self.timer2.timeout.connect(self.messages)
+        self.timer2.start()
+        
         # for u in userList:
         #     tmpstring += u + "\n"
         
@@ -351,6 +356,17 @@ class Okno(QMainWindow):
         for usr in usrList:
             tmp += usr + "\n"
         self.users.setText(tmp)
+    
+    def messages(self):
+        if self.voice_client.guiMessage != 0:
+            if self.voice_client.guiMessage == 1:
+                print("Rozłączono z serwerem. Spróbuj ponownie...")
+                msg2 = QMessageBox()
+                msg2.setWindowTitle("UWAGA!")
+                msg2.setText("Rozłączono z serwerem. Spróbuj ponownie...")
+                msg2.exec_()
+                self.Stack.setCurrentIndex(0)
+                self.voice_client.guiMessage = 0
 
 #App and window initialization
 app = QApplication(sys.argv)

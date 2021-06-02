@@ -181,7 +181,9 @@ class Client:
                         self.tcp_conn_status = False
                         self.guiMessage = 1
                     except:
-                        pass
+                        self.tcp_s.close()
+                        self.tcp_conn_status = False
+                        self.guiMessage = 1
                 break
 
 
