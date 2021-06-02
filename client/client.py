@@ -166,10 +166,10 @@ class Client:
                             users.append(message[i])
                         self.usersList = users
 
-                time.sleep(1)
-
                 if len(ready_to_write) > 0:
                     self.tcp_s.send(bytes('AWLI', 'UTF-8'))
+
+                time.sleep(1)
 
             except:
                 if(self.tcp_conn_status == True):
@@ -186,10 +186,15 @@ class Client:
 
 
     def disconnect(self):
-        self.tcp_s.send(bytes("LEAV", 'UTF-8'))
-        self.tcp_s.shutdown(socket.SHUT_RDWR)
-        self.tcp_s.close()
-        self.tcp_conn_status = False
+        try:
+            self.tcp_s.send(bytes("LEAV", 'UTF-8'))
+            self.tcp_s.shutdown(socket.SHUT_RDWR)
+            self.tcp_s.close()
+            self.tcp_conn_status = False
+        except:
+            self.tcp_s.shutdown(socket.SHUT_RDWR)
+            self.tcp_s.close()
+            self.tcp_conn_status = False
         print("disconnected")
 
 
