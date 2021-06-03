@@ -331,7 +331,7 @@ class Okno(QMainWindow):
             self.Stack.setCurrentIndex(0)
     
     def refreshClicked(self):
-        self.input_devices, self.output_devices = self.voice_client.audio_devices()
+        self.input_devices, self.output_devices = self.voice_client.refresh_audio_setup()
         self.cb1.clear()
         self.cb2.clear()
         tmp1 = []
