@@ -38,57 +38,57 @@ class Server:
         self.tcp_s.listen(25)
         while True:
             conn, address = self.tcp_s.accept()
-            Thread(target=self.newConnection, args=(conn, address)).start()
+            data = conn.recv(1024) #messages: JOIN Nick; AWLI; LEAV;
+            decoded = data.decode('UTF-8')
+            message = decoded.split()
+            if(message[0] == 'JOIN' and len(message[1]) > 0 and len(message[2]) > 0):
+                
+                user = User(conn, message[1], address, int(message[2]))
+                self.userList.append(user)
 
-    def newConnection(self, conn, address):
-        data = conn.recv(1024) #messages: JOIN Nick; AWLI; LEAV;
-        decoded = data.decode('UTF-8')
-        message = decoded.split()
-        if(message[0] == 'JOIN' and len(message[1]) > 0 and len(message[2]) > 0):
-            
-            user = User(conn, message[1], address, int(message[2]))
-            self.userList.append(user)
+                #create udp socket for user
+                user_udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                user_udp_s.bind((self.ip, 0))
 
-            #create udp socket for user
-            user_udp_s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            user_udp_s.bind((self.ip, 0))
+                #send OK with udp port for audio communication
+                conn.send(bytes('OK '+str(user_udp_s.getsockname()[1]), 'UTF-8'))
+                print("\n"+user.udpAddr[0]+" User "+user.name+" joined server")
+                print("  TCP: "+str(user.tcpAddr[1])+" <-> "+str(self.server_tcp_port))
+                print("  UDP: "+str(user.udpAddr[1])+" <-> "+str(user_udp_s.getsockname()[1]))
+                
+                Thread(target=self.newConnection, args=(conn, user)).start()
+                Thread(target=self.audioStreaming, args=(user_udp_s, user)).start()
+            else:
+                print('\nReceived bad data: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
+                conn.send(bytes('BAD DATA', 'UTF-8'))
+                conn.close()
 
-            #send OK with udp port for audio communication
-            conn.send(bytes('OK '+str(user_udp_s.getsockname()[1]), 'UTF-8'))
-            print("\n"+user.udpAddr[0]+" User "+user.name+" joined server")
-            print("  TCP: "+str(user.tcpAddr[1])+" <-> "+str(self.server_tcp_port))
-            print("  UDP: "+str(user.udpAddr[1])+" <-> "+str(user_udp_s.getsockname()[1]))
-            
-            Thread(target=self.audioStreaming, args=(user_udp_s, user)).start()
+    def newConnection(self, conn, user):
+        while True:
+            try:
+                data = conn.recv(1024)
+                decoded = data.decode('UTF-8')
+                message = decoded.split()
+                if(message[0] == 'LEAV'):
+                    self.userList.remove(user)
+                    conn.send(bytes('BYE', 'UTF-8'))
+                    print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected peacefully")
+                    break
+                elif(message[0] == 'AWLI'):
+                    message = 'LIST'
+                    for u in self.userList:
+                        message += ' '+str(u.name)
+                    conn.send(bytes(message, 'UTF-8'))
 
-            while True:
+            except socket.error:
                 try:
-                    data = conn.recv(1024)
-                    decoded = data.decode('UTF-8')
-                    message = decoded.split()
-                    if(message[0] == 'LEAV'):
-                        self.userList.remove(user)
-                        conn.send(bytes('BYE', 'UTF-8'))
-                        print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected peacefully")
-                        break
-                    elif(message[0] == 'AWLI'):
-                        message = 'LIST'
-                        for user in self.userList:
-                            message += ' '+str(user.name)
-                        conn.send(bytes(message, 'UTF-8'))
-
-                except socket.error:
-                    try:
-                        print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected forcibly")
-                        self.userList.remove(user)
-                        conn.close()
-                        break
-                    except:
-                        break
-        else:
-            print('\nReceived bad data: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
-            conn.send(bytes('BAD DATA', 'UTF-8'))
-            conn.close()
+                    print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected forcibly")
+                    self.userList.remove(user)
+                    conn.close()
+                    break
+                except:
+                    break
+        
 
     def audioStreaming(self, soc, streamer):
         while streamer in self.userList:
