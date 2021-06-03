@@ -73,7 +73,6 @@ class Server:
                         self.userList.remove(user)
                         conn.send(bytes('BYE', 'UTF-8'))
                         print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected peacefully")
-                        conn.close()
                         break
                     elif(message[0] == 'AWLI'):
                         message = 'LIST'
@@ -82,10 +81,13 @@ class Server:
                         conn.send(bytes(message, 'UTF-8'))
 
                 except socket.error:
-                    self.userList.remove(user)
-                    print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected forcibly")
-                    conn.close()
-                    break
+                    try:
+                        print("\nUser "+user.name+" from: "+user.udpAddr[0]+":"+str(user.tcpAddr[1])+" disconnected forcibly")
+                        self.userList.remove(user)
+                        conn.close()
+                        break
+                    except:
+                        break
         else:
             print('\nReceived bad data: '+decoded+' from: '+str(address[0])+':'+str(address[1]))
             conn.send(bytes('BAD DATA', 'UTF-8'))

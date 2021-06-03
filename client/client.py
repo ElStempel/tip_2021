@@ -24,7 +24,7 @@ class Client:
         self.CHUNK = 32
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
-        self.RATE = 20000 #must match input audio device
+        self.RATE = 44100 #must match input audio device
 
         self.tcp_s = None
         self.udp_s = None
@@ -84,37 +84,33 @@ class Client:
         defaultInputDev = self.p.get_default_input_device_info()
         defaultOutputDev = self.p.get_default_output_device_info()
 
-        # #Choose hostapi based on system and list devices
-        # if(platform.system() == 'Windows'):
-        #     hostApi = self.p.get_host_api_info_by_type(pyaudio.paWASAPI)
-        #     for id in range(self.p.get_device_count()):
-        #         dev_dict = self.p.get_device_info_by_index(id)
-        #         #if(dev_dict.get('hostApi') == hostApi.get('index')):
-        #         if('SPDIF' not in dev_dict.get('name')):                    
-        #             if(dev_dict.get('maxInputChannels') > 0):
-        #                 inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
-        #             elif(dev_dict.get('maxOutputChannels') > 0):
-        #                 outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
-        # else:
-        #     for id in range(self.p.get_device_count()):
-        #         dev_dict = self.p.get_device_info_by_index(id)
-        #         if(dev_dict.get('maxInputChannels') > 0):
-        #             inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
-        #         elif(dev_dict.get('maxOutputChannels') > 0):
-        #             outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+        #Choose hostapi based on system and list devices
+        if(platform.system() == 'Windows'):
+            hostApi = self.p.get_host_api_info_by_type(pyaudio.paMME)
+            for id in range(self.p.get_device_count()):
+                dev_dict = self.p.get_device_info_by_index(id)
+                if(dev_dict.get('hostApi') == hostApi.get('index')):
+                    if('SPDIF' not in dev_dict.get('name')):                    
+                        if(dev_dict.get('maxInputChannels') > 0):
+                            inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+                        elif(dev_dict.get('maxOutputChannels') > 0):
+                            outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+        else:
+            for id in range(self.p.get_device_count()):
+                dev_dict = self.p.get_device_info_by_index(id)
+                if(dev_dict.get('maxInputChannels') > 0):
+                    inputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
+                elif(dev_dict.get('maxOutputChannels') > 0):
+                    outputDevs.append((dev_dict.get('index'), dev_dict.get('name')))
 
-        #move default to first element in list
-        # for i in range(len(inputDevs)):
-        #     if(defaultInputDev.get('name') in inputDevs[i][1]):
-        #         inputDevs.insert(0, inputDevs.pop(i))
+        #Move default to first element in list
+        for i in range(len(inputDevs)):
+            if(defaultInputDev.get('name') in inputDevs[i][1]):
+                inputDevs.insert(0, inputDevs.pop(i))
 
-        # for i in range(len(outputDevs)):
-        #     if(defaultOutputDev.get('name') in outputDevs[i][1]):
-        #         outputDevs.insert(0, outputDevs.pop(i))
-        
-        inputDevs.append((defaultInputDev.get('index'), defaultInputDev.get('name')))
-        outputDevs.append((defaultOutputDev.get('index'), defaultOutputDev.get('name')))
-
+        for i in range(len(outputDevs)):
+            if(defaultOutputDev.get('name') in outputDevs[i][1]):
+                outputDevs.insert(0, outputDevs.pop(i))
 
         return inputDevs, outputDevs
 
@@ -192,8 +188,11 @@ class Client:
     def disconnect(self):
         try:
             self.tcp_s.send(bytes("LEAV", 'UTF-8'))
-            self.tcp_s.shutdown(socket.SHUT_RDWR)
-            self.tcp_s.close()
+            recv = self.tcp_s.recv(1024)
+            decoded = recv.decode('UTF-8')
+            if(decoded == 'BYE'):
+                self.tcp_s.shutdown(socket.SHUT_RDWR)
+                self.tcp_s.close()
             self.tcp_conn_status = False
         except:
             self.tcp_s.close()
