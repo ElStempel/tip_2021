@@ -2,6 +2,15 @@
 
 ## Komunikator VoIP serwer - klient
 
-10.04 - Działający serwer i klient. Jeszcze brak obsługi wielu klientów. Przesyłanie dźwięku tam i spowrotem. Działa bezbłędnie przy użyciu protokołu UDP.
+Wymagania:
+- Python 3.8 lub nowszy
+- PyQt5
+- PyAudio
 
-11.04 - Pierwsze przymiarki do obsługi wielu klientów. Dodatkowa komunikacja po TCP.
+Uruchamianie serwera (wymagane uzupełnienie pliku konfiguracyjnego):
+- `cd server`
+- `python server.py`
+
+Uruchamianie klienta:
+- `cd client`
+- `python main.py`
