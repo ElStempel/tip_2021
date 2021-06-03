@@ -24,7 +24,7 @@ class Client:
         self.CHUNK = 32
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
-        self.RATE = 44100 #must match input audio device
+        self.RATE = 44100
 
         self.tcp_s = None
         self.udp_s = None
@@ -208,7 +208,6 @@ class Client:
                 else:
                     data = b''
                 self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
-                #time.sleep(0.8*self.CHUNK/self.RATE) #time.sleep(0.8*CHUNK/sample_rate)
             else:
                 break
 

@@ -21,9 +21,6 @@ class Server:
             self.server_tcp_port = 0
         else:
             self.server_tcp_port = int(tcp_port)
-
-
-        #self.server_udp_port = 5000 #do zmiany, będzie wysyłanie w połączeniu tcp
         
         self.userList = []
 
@@ -44,7 +41,7 @@ class Server:
             Thread(target=self.newConnection, args=(conn, address)).start()
 
     def newConnection(self, conn, address):
-        data = conn.recv(1024) #komunikaty: JOIN Nick; LEAV;
+        data = conn.recv(1024) #messages: JOIN Nick; AWLI; LEAV;
         decoded = data.decode('UTF-8')
         message = decoded.split()
         if(message[0] == 'JOIN' and len(message[1]) > 0 and len(message[2]) > 0):
