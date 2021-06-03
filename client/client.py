@@ -31,30 +31,38 @@ class Client:
 
         self.muted = False
         self.usersList = []
-
+        self.p = pyaudio.PyAudio()
         self.refresh_audio_setup()
 
     def refresh_audio_setup(self):
         #init mic recording and sound playback
+        
+        self.p.terminate()
         self.p = pyaudio.PyAudio()
 
         inDev, outDev = self.audio_devices()
         
-        inDevId = inDev[0][0]
-        outDevId = outDev[0][0]
-
-        self.rec_stream = self.p.open(format=self.FORMAT,
-                        channels=self.CHANNELS,
-                        rate=self.RATE,
-                        input=True,
-                        frames_per_buffer=self.CHUNK,
-                        input_device_index=inDevId)
-        self.play_stream = self.p.open(format=self.FORMAT,
-                        channels=self.CHANNELS,
-                        rate=self.RATE,
-                        output=True,
-                        frames_per_buffer=self.CHUNK,
-                        output_device_index=outDevId)
+        try:
+            inDevId = inDev[0][0]
+            self.rec_stream = self.p.open(format=self.FORMAT,
+                            channels=self.CHANNELS,
+                            rate=self.RATE,
+                            input=True,
+                            frames_per_buffer=self.CHUNK,
+                            input_device_index=inDevId)
+        except:
+            pass
+            
+        try:    
+            outDevId = outDev[0][0]
+            self.play_stream = self.p.open(format=self.FORMAT,
+                            channels=self.CHANNELS,
+                            rate=self.RATE,
+                            output=True,
+                            frames_per_buffer=self.CHUNK,
+                            output_device_index=outDevId)
+        except:
+            pass
     
     def in_setup(self, inDevId):
         try:
@@ -81,9 +89,14 @@ class Client:
     def audio_devices(self):
         inputDevs = []
         outputDevs = []
-        defaultInputDev = self.p.get_default_input_device_info()
-        defaultOutputDev = self.p.get_default_output_device_info()
-
+        try:
+            defaultInputDev = self.p.get_default_input_device_info()
+        except:
+            self.guiMessage = 2
+        try:
+            defaultOutputDev = self.p.get_default_output_device_info()
+        except:
+            self.guiMessage = 3
         #Choose hostapi based on system and list devices
         if(platform.system() == 'Windows'):
             hostApi = self.p.get_host_api_info_by_type(pyaudio.paMME)
@@ -203,14 +216,17 @@ class Client:
     def udpSend(self):
         while True:
             if (self.tcp_conn_status == True):            
-                if(self.muted == False):
-                    data = self.rec_stream.read(self.CHUNK, exception_on_overflow=False)
-                else:
-                    data = b''
-                self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
+                try:
+                    if(self.muted == False):
+                        data = self.rec_stream.read(self.CHUNK, exception_on_overflow=False)
+                    else:
+                        data = b''
+                    self.udp_s.sendto(data, (self.server_address, self.server_udp_port))
+                except:
+                    pass
             else:
                 break
-
+            
     def udpRecv(self):
         while True:
             if (self.tcp_conn_status == True):
