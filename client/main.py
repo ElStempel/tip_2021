@@ -367,6 +367,18 @@ class Okno(QMainWindow):
                 msg2.exec_()
                 self.Stack.setCurrentIndex(0)
                 self.voice_client.guiMessage = 0
+            if self.voice_client.guiMessage == 2:
+                msg3 = QMessageBox()
+                msg3.setWindowTitle("UWAGA!")
+                msg3.setText("Brak urządzenia wejściowego dla audio")
+                msg3.exec_()
+                self.voice_client.guiMessage = 0
+            if self.voice_client.guiMessage == 3:
+                msg3 = QMessageBox()
+                msg3.setWindowTitle("UWAGA!")
+                msg3.setText("Brak urządzenia wyjściowego dla audio")
+                msg3.exec_()
+                self.voice_client.guiMessage = 0
 
 #App and window initialization
 app = QApplication(sys.argv)
