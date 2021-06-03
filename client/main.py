@@ -331,7 +331,7 @@ class Okno(QMainWindow):
             self.Stack.setCurrentIndex(0)
     
     def refreshClicked(self):
-        self.input_devices, self.output_devices = self.voice_client.audio_devices()
+        self.input_devices, self.output_devices = self.voice_client.refresh_audio_setup()
         self.cb1.clear()
         self.cb2.clear()
         tmp1 = []
@@ -366,6 +366,18 @@ class Okno(QMainWindow):
                 msg2.setText("Rozłączono z serwerem. Spróbuj ponownie...")
                 msg2.exec_()
                 self.Stack.setCurrentIndex(0)
+                self.voice_client.guiMessage = 0
+            if self.voice_client.guiMessage == 2:
+                msg3 = QMessageBox()
+                msg3.setWindowTitle("UWAGA!")
+                msg3.setText("Brak urządzenia wejściowego dla audio")
+                msg3.exec_()
+                self.voice_client.guiMessage = 0
+            if self.voice_client.guiMessage == 3:
+                msg3 = QMessageBox()
+                msg3.setWindowTitle("UWAGA!")
+                msg3.setText("Brak urządzenia wyjściowego dla audio")
+                msg3.exec_()
                 self.voice_client.guiMessage = 0
 
 #App and window initialization
