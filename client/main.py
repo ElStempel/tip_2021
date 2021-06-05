@@ -112,13 +112,7 @@ class Okno(QMainWindow):
         second_settingsButton.setText("\u2699")
         second_settingsButton.clicked.connect(self.settingsClicked)
         
-        #users
-        
-        # userList = []
-        # tmpstring = ""
-        # for i in range(25):
-        #     userList.append("user" + str(i+1))
-        
+        #users       
         self.users = QTextEdit("")
         self.users.setStyleSheet("color: white")
         self.users.setReadOnly(True)
@@ -134,11 +128,7 @@ class Okno(QMainWindow):
         self.timer2.setInterval(500)          # Throw event timeout with an interval of 1000 milliseconds
         self.timer2.timeout.connect(self.messages)
         self.timer2.start()
-        
-        # for u in userList:
-        #     tmpstring += u + "\n"
-        
-            
+                    
         #userBox
         userBox = QGroupBox("Użytkownicy")
         userBox.setStyleSheet("color: white")
