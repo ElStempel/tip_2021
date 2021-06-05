@@ -118,7 +118,6 @@ class Client:
         #Move default to first element in list
 
         try:
-            #defaultInputDev = self.p.get_default_input_device_info()
             defaultInputDev = sd.default.device[0]
             for i in range(len(inputDevs)):
                 if(inputDevs[i][0] == defaultInputDev):
